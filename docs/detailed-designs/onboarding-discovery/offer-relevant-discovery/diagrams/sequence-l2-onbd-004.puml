@@ -1,0 +1,59 @@
+@startuml
+title UML sequence behaviour — Discover eligible Communities
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "New Account Holder" as actor
+box "Frontend — Member Web Application" #E0F2FE
+  participant "OfferRelevantDiscoverySurface" as surface
+  participant "OfferRelevantDiscoveryClient" as client
+end box
+box "Backend — Community API" #D1FADF
+  participant "OfferRelevantDiscoveryEndpoint" as endpoint
+end box
+box "Backend — Community Application and Domain" #ECFDF3
+  participant "OfferRelevantDiscoveryHandler" as handler
+  participant "OfferRelevantDiscoveryPolicy" as policy
+end box
+box "Backend — Community Infrastructure" #FFF4E5
+  database "Community Database" as store
+  participant "OfferRelevantDiscoveryProjector" as projector
+end box
+
+actor -> surface : Start discover eligible Communities
+surface -> client : Build typed request
+client -> endpoint : Submit request
+endpoint -> endpoint : Authenticate and apply boundary policy
+endpoint -> handler : Send OfferRelevantDiscoveryRequest
+handler -> store : Load current scoped state
+store --> handler : Current state and version
+handler -> policy : Enforce L2-ONBD-004 — discover eligible Communities
+policy --> handler : Typed decision
+alt Decision is accepted
+  opt Requirement changes authoritative state
+    handler -> store : Commit state and outcome conditionally
+    store --> handler : Commit result
+  end
+  opt Committed outcome has derived effects
+    handler -> projector : Publish committed outcome
+    projector --> handler : Accepted for idempotent processing
+  end
+  handler --> endpoint : Accepted feature result
+else Decision is rejected or stale
+  handler --> endpoint : Safe validation, denial, or conflict result
+end
+endpoint --> client : Typed response
+client --> surface : Reconciled feature result
+surface --> actor : Present current outcome
+@enduml

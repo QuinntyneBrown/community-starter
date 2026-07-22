@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Lifecycle rules cover every data copy
+
+class GovernEveryDataCopyRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class GovernEveryDataCopyDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class GovernEveryDataCopyRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: GovernEveryDataCopyDecision): void
+}
+
+interface IGovernEveryDataCopyRepository {
+  +Load(subjectId: string): Task<GovernEveryDataCopyRecord>
+  +Commit(record: GovernEveryDataCopyRecord, expectedVersion: long): Task<bool>
+}
+
+class GovernEveryDataCopyPolicy {
+  +Evaluate(record: GovernEveryDataCopyRecord, request: GovernEveryDataCopyRequest): GovernEveryDataCopyDecision
+  +EnforceRetentionSchedules(record: GovernEveryDataCopyRecord, request: GovernEveryDataCopyRequest): GovernEveryDataCopyDecision
+  +PropagateDeletionToDerivedSystems(record: GovernEveryDataCopyRecord, request: GovernEveryDataCopyRequest): GovernEveryDataCopyDecision
+  +PreserveSharedContentIntegrityWithoutRetainingIdentityUnnecessarily(record: GovernEveryDataCopyRecord, request: GovernEveryDataCopyRequest): GovernEveryDataCopyDecision
+  +RestrictLegalHoldsAndSafetyEvidence(record: GovernEveryDataCopyRecord, request: GovernEveryDataCopyRequest): GovernEveryDataCopyDecision
+}
+
+class GovernEveryDataCopyHandler {
+  +Handle(request: GovernEveryDataCopyRequest): Task<GovernEveryDataCopyDecision>
+}
+
+class GovernEveryDataCopyProjector {
+  +Project(decision: GovernEveryDataCopyDecision): Task<void>
+}
+
+GovernEveryDataCopyHandler ..> GovernEveryDataCopyRequest : handles
+GovernEveryDataCopyHandler ..> GovernEveryDataCopyPolicy : evaluates with
+GovernEveryDataCopyHandler --> IGovernEveryDataCopyRepository : loads / commits
+IGovernEveryDataCopyRepository --> GovernEveryDataCopyRecord : persists
+GovernEveryDataCopyPolicy ..> GovernEveryDataCopyRecord : inspects
+GovernEveryDataCopyPolicy --> GovernEveryDataCopyDecision : produces
+GovernEveryDataCopyRecord ..> GovernEveryDataCopyDecision : applies accepted
+GovernEveryDataCopyProjector ..> GovernEveryDataCopyDecision : consumes committed
+@enduml

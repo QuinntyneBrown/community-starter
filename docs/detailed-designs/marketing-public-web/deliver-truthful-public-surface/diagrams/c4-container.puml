@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers — Deliver an independent and truthful public surface
+
+Person(actor, "Visitor", "Reads public content and chooses an available application action")
+System_Ext(external, "CDN and Search Crawlers", "Public caching, routing, and indexing systems")
+System_Boundary(system, "Community Public Web") {
+  Container(frontend, "Public Website", "HTML, CSS, and TypeScript", "Collects intent and presents current state")
+  Container(backend, "Public Web Publishing Pipeline", "CI workflows", "Applies synchronous boundary and application policy")
+  Container(worker, "Release Verification Worker", "Pipeline jobs", "Processes idempotent post-commit work")
+  ContainerDb(store, "Public Artifact Manifest", "Versioned files", "Stores authoritative state and durable outcomes")
+}
+
+Rel(actor, frontend, "Uses", "HTTPS or local command")
+Rel(frontend, backend, "Submits typed intent", "Typed contract")
+Rel(backend, store, "Reads and conditionally writes", "Transactional adapter")
+Rel(backend, worker, "Publishes committed outcomes", "Durable queue")
+Rel(worker, store, "Reads outcomes and checkpoints", "Idempotent adapter")
+Rel(worker, external, "Invokes eligible external work", "Purpose-bound contract")
+@enduml

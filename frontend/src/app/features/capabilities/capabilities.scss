@@ -1,0 +1,62 @@
+.capability-grid,
+.catalog-groups,
+.catalog-features {
+  display: grid;
+  gap: var(--cs-space-5);
+}
+
+.capability-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+}
+
+.capability-card h2,
+.catalog-features h2 {
+  font-size: var(--cs-step-1);
+}
+
+.capability-card ul,
+.catalog-features ul {
+  padding-inline-start: 1.25rem;
+}
+
+.capability-card li {
+  display: grid;
+  gap: var(--cs-space-1);
+  margin-block: var(--cs-space-3);
+}
+
+code {
+  width: fit-content;
+  padding: 0.12rem 0.4rem;
+  border-radius: var(--cs-radius-sm);
+  color: var(--cs-color-ink);
+  background: color-mix(in srgb, var(--cs-color-sky) 28%, white);
+  font-size: var(--cs-step--1);
+}
+
+.catalog-group summary {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--cs-space-4);
+  cursor: pointer;
+  font-family: var(--cs-font-heading);
+  font-size: var(--cs-step-1);
+  font-weight: 700;
+}
+
+.catalog-group summary small {
+  color: var(--cs-text-muted);
+  font-family: var(--cs-font-body);
+  font-size: var(--cs-step--1);
+  font-weight: 500;
+}
+
+.catalog-features {
+  margin-block-start: var(--cs-space-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+
+.catalog-features article {
+  padding-block-start: var(--cs-space-4);
+  border-block-start: var(--cs-border-width) solid var(--cs-border-default);
+}

@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Safe policy reporting
+
+class ReportPolicyHarmRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ReportPolicyHarmDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ReportPolicyHarmRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ReportPolicyHarmDecision): void
+}
+
+interface IReportPolicyHarmRepository {
+  +Load(subjectId: string): Task<ReportPolicyHarmRecord>
+  +Commit(record: ReportPolicyHarmRecord, expectedVersion: long): Task<bool>
+}
+
+class ReportPolicyHarmPolicy {
+  +Evaluate(record: ReportPolicyHarmRecord, request: ReportPolicyHarmRequest): ReportPolicyHarmDecision
+  +ApplyVersionedPolicyPrecedence(record: ReportPolicyHarmRecord, request: ReportPolicyHarmRequest): ReportPolicyHarmDecision
+  +SubmitASafeReport(record: ReportPolicyHarmRecord, request: ReportPolicyHarmRequest): ReportPolicyHarmDecision
+  +ProtectReportersAndLimitAbuse(record: ReportPolicyHarmRecord, request: ReportPolicyHarmRequest): ReportPolicyHarmDecision
+  +PreserveABoundedPriorViewReportingPath(record: ReportPolicyHarmRecord, request: ReportPolicyHarmRequest): ReportPolicyHarmDecision
+}
+
+class ReportPolicyHarmHandler {
+  +Handle(request: ReportPolicyHarmRequest): Task<ReportPolicyHarmDecision>
+}
+
+class ReportPolicyHarmProjector {
+  +Project(decision: ReportPolicyHarmDecision): Task<void>
+}
+
+ReportPolicyHarmHandler ..> ReportPolicyHarmRequest : handles
+ReportPolicyHarmHandler ..> ReportPolicyHarmPolicy : evaluates with
+ReportPolicyHarmHandler --> IReportPolicyHarmRepository : loads / commits
+IReportPolicyHarmRepository --> ReportPolicyHarmRecord : persists
+ReportPolicyHarmPolicy ..> ReportPolicyHarmRecord : inspects
+ReportPolicyHarmPolicy --> ReportPolicyHarmDecision : produces
+ReportPolicyHarmRecord ..> ReportPolicyHarmDecision : applies accepted
+ReportPolicyHarmProjector ..> ReportPolicyHarmDecision : consumes committed
+@enduml

@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Make language, locale, and media inclusive
+
+class MakeLanguageAndMediaInclusiveRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class MakeLanguageAndMediaInclusiveDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class MakeLanguageAndMediaInclusiveRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: MakeLanguageAndMediaInclusiveDecision): void
+}
+
+interface IMakeLanguageAndMediaInclusiveRepository {
+  +Load(subjectId: string): Task<MakeLanguageAndMediaInclusiveRecord>
+  +Commit(record: MakeLanguageAndMediaInclusiveRecord, expectedVersion: long): Task<bool>
+}
+
+class MakeLanguageAndMediaInclusivePolicy {
+  +Evaluate(record: MakeLanguageAndMediaInclusiveRecord, request: MakeLanguageAndMediaInclusiveRequest): MakeLanguageAndMediaInclusiveDecision
+  +LocalizeEveryUserFacingContract(record: MakeLanguageAndMediaInclusiveRecord, request: MakeLanguageAndMediaInclusiveRequest): MakeLanguageAndMediaInclusiveDecision
+  +RenderLocaleAndTimeZoneValuesConsistently(record: MakeLanguageAndMediaInclusiveRecord, request: MakeLanguageAndMediaInclusiveRequest): MakeLanguageAndMediaInclusiveDecision
+  +RequireAccessibleMediaAlternatives(record: MakeLanguageAndMediaInclusiveRecord, request: MakeLanguageAndMediaInclusiveRequest): MakeLanguageAndMediaInclusiveDecision
+}
+
+class MakeLanguageAndMediaInclusiveHandler {
+  +Handle(request: MakeLanguageAndMediaInclusiveRequest): Task<MakeLanguageAndMediaInclusiveDecision>
+}
+
+class MakeLanguageAndMediaInclusiveProjector {
+  +Project(decision: MakeLanguageAndMediaInclusiveDecision): Task<void>
+}
+
+MakeLanguageAndMediaInclusiveHandler ..> MakeLanguageAndMediaInclusiveRequest : handles
+MakeLanguageAndMediaInclusiveHandler ..> MakeLanguageAndMediaInclusivePolicy : evaluates with
+MakeLanguageAndMediaInclusiveHandler --> IMakeLanguageAndMediaInclusiveRepository : loads / commits
+IMakeLanguageAndMediaInclusiveRepository --> MakeLanguageAndMediaInclusiveRecord : persists
+MakeLanguageAndMediaInclusivePolicy ..> MakeLanguageAndMediaInclusiveRecord : inspects
+MakeLanguageAndMediaInclusivePolicy --> MakeLanguageAndMediaInclusiveDecision : produces
+MakeLanguageAndMediaInclusiveRecord ..> MakeLanguageAndMediaInclusiveDecision : applies accepted
+MakeLanguageAndMediaInclusiveProjector ..> MakeLanguageAndMediaInclusiveDecision : consumes committed
+@enduml

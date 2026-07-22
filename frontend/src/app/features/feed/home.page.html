@@ -1,0 +1,111 @@
+<section class="cs-page feed-layout">
+  <aside class="workspace-panel">
+    <p class="cs-eyebrow">Current community</p>
+    @if (workspace.communityId()) {
+      <h1>{{ workspace.communityName() }}</h1>
+      <p class="cs-muted">Your Feed is filtered by current membership and community policy.</p>
+      <a [routerLink]="['/communities', workspace.communityId(), 'moderation']"
+        >Moderation workspace</a
+      >
+    } @else {
+      <h1>Choose where you belong.</h1>
+      <p>Create the first community to begin the end-to-end journey.</p>
+      <a class="cs-button" routerLink="/communities/new">Create a community</a>
+    }
+  </aside>
+
+  @if (workspace.communityId()) {
+    <div class="feed cs-stack">
+      <form class="composer cs-card cs-stack" [formGroup]="composer" (ngSubmit)="publish()">
+        <label for="post-body"><strong>Share something useful</strong></label>
+        <textarea
+          id="post-body"
+          rows="5"
+          formControlName="body"
+          placeholder="What would help this community move forward?"
+        ></textarea>
+        <div class="cs-cluster">
+          <button class="cs-button" type="submit" [disabled]="isPublishing()">
+            {{ isPublishing() ? 'Publishing…' : 'Publish' }}
+          </button>
+          <small>Visible only to currently eligible members.</small>
+        </div>
+      </form>
+
+      @if (problem()) {
+        <div class="cs-error" role="alert">{{ problem()?.title }}</div>
+      }
+      @if (reportConfirmation()) {
+        <div class="cs-success" role="status">{{ reportConfirmation() }}</div>
+      }
+
+      @if (isLoading() && posts().length === 0) {
+        <div class="cs-card" role="status">Loading the latest contributions…</div>
+      } @else if (posts().length === 0) {
+        <div class="cs-card empty-state">
+          <p class="cs-eyebrow">A fresh space</p>
+          <h2>Make the first contribution.</h2>
+          <p>Share a question, an idea, or a practical next step.</p>
+        </div>
+      } @else {
+        <ol class="post-list" aria-label="Community posts">
+          @for (post of posts(); track post.id) {
+            <li>
+              <article class="cs-card post-card">
+                <header class="post-card__meta">
+                  <span>Community member</span>
+                  <time [attr.datetime]="post.publishedAt">{{
+                    post.publishedAt | date: 'medium'
+                  }}</time>
+                </header>
+                <p class="post-card__body">{{ post.body }}</p>
+                <footer class="cs-cluster">
+                  <button class="text-action" type="button" (click)="react(post, 'appreciate')">
+                    Appreciate <span aria-label="reaction count">{{ post.reactionCount }}</span>
+                  </button>
+                  <button class="text-action" type="button" (click)="openReport(post.id)">
+                    Report
+                  </button>
+                </footer>
+                @if (reportingPostId() === post.id) {
+                  <form
+                    class="report-form cs-stack"
+                    [formGroup]="reportForm"
+                    (ngSubmit)="submitReport()"
+                  >
+                    <div class="cs-field">
+                      <label [for]="'report-' + post.id">What happened?</label>
+                      <textarea
+                        [id]="'report-' + post.id"
+                        rows="3"
+                        formControlName="reason"
+                      ></textarea>
+                    </div>
+                    <div class="cs-cluster">
+                      <button class="cs-button cs-button--danger" type="submit">
+                        Submit report
+                      </button>
+                      <button class="text-action" type="button" (click)="reportingPostId.set(null)">
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                }
+              </article>
+            </li>
+          }
+        </ol>
+        @if (nextCursor()) {
+          <button
+            class="cs-button cs-button--secondary"
+            type="button"
+            [disabled]="isLoading()"
+            (click)="load(true)"
+          >
+            {{ isLoading() ? 'Loading…' : 'Load more' }}
+          </button>
+        }
+      }
+    </div>
+  }
+</section>

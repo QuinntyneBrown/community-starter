@@ -1,0 +1,6 @@
+apiVersion: v2
+name: community-starter
+description: Provider-neutral OCI deployment for Community Starter
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

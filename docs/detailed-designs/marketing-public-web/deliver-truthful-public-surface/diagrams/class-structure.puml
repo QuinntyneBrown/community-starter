@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Deliver an independent and truthful public surface
+
+class DeliverTruthfulPublicSurfaceRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class DeliverTruthfulPublicSurfaceDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class DeliverTruthfulPublicSurfaceRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: DeliverTruthfulPublicSurfaceDecision): void
+}
+
+interface IDeliverTruthfulPublicSurfaceRepository {
+  +Load(subjectId: string): Task<DeliverTruthfulPublicSurfaceRecord>
+  +Commit(record: DeliverTruthfulPublicSurfaceRecord, expectedVersion: long): Task<bool>
+}
+
+class DeliverTruthfulPublicSurfacePolicy {
+  +Evaluate(record: DeliverTruthfulPublicSurfaceRecord, request: DeliverTruthfulPublicSurfaceRequest): DeliverTruthfulPublicSurfaceDecision
+  +MarketingRemainsStaticAndRuntimeIndependent(record: DeliverTruthfulPublicSurfaceRecord, request: DeliverTruthfulPublicSurfaceRequest): DeliverTruthfulPublicSurfaceDecision
+  +ContentFollowsAClearOutcomeToActionNarrative(record: DeliverTruthfulPublicSurfaceRecord, request: DeliverTruthfulPublicSurfaceRequest): DeliverTruthfulPublicSurfaceDecision
+  +CallsToActionAndProductClaimsAreHonestAndStable(record: DeliverTruthfulPublicSurfaceRecord, request: DeliverTruthfulPublicSurfaceRequest): DeliverTruthfulPublicSurfaceDecision
+}
+
+class DeliverTruthfulPublicSurfaceHandler {
+  +Handle(request: DeliverTruthfulPublicSurfaceRequest): Task<DeliverTruthfulPublicSurfaceDecision>
+}
+
+class DeliverTruthfulPublicSurfaceProjector {
+  +Project(decision: DeliverTruthfulPublicSurfaceDecision): Task<void>
+}
+
+DeliverTruthfulPublicSurfaceHandler ..> DeliverTruthfulPublicSurfaceRequest : handles
+DeliverTruthfulPublicSurfaceHandler ..> DeliverTruthfulPublicSurfacePolicy : evaluates with
+DeliverTruthfulPublicSurfaceHandler --> IDeliverTruthfulPublicSurfaceRepository : loads / commits
+IDeliverTruthfulPublicSurfaceRepository --> DeliverTruthfulPublicSurfaceRecord : persists
+DeliverTruthfulPublicSurfacePolicy ..> DeliverTruthfulPublicSurfaceRecord : inspects
+DeliverTruthfulPublicSurfacePolicy --> DeliverTruthfulPublicSurfaceDecision : produces
+DeliverTruthfulPublicSurfaceRecord ..> DeliverTruthfulPublicSurfaceDecision : applies accepted
+DeliverTruthfulPublicSurfaceProjector ..> DeliverTruthfulPublicSurfaceDecision : consumes committed
+@enduml

@@ -1,0 +1,22 @@
+.auth-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 30rem);
+  align-items: start;
+  gap: var(--cs-space-7);
+}
+
+.auth-page__intro h1 {
+  max-width: 12ch;
+  font-size: var(--cs-step-3);
+}
+
+.development-note {
+  padding: var(--cs-space-3);
+  background: var(--cs-color-yellow);
+}
+
+@media (max-width: 48rem) {
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Least-privilege platform and support access
+
+class ControlPlatformSupportAccessRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ControlPlatformSupportAccessDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ControlPlatformSupportAccessRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ControlPlatformSupportAccessDecision): void
+}
+
+interface IControlPlatformSupportAccessRepository {
+  +Load(subjectId: string): Task<ControlPlatformSupportAccessRecord>
+  +Commit(record: ControlPlatformSupportAccessRecord, expectedVersion: long): Task<bool>
+}
+
+class ControlPlatformSupportAccessPolicy {
+  +Evaluate(record: ControlPlatformSupportAccessRecord, request: ControlPlatformSupportAccessRequest): ControlPlatformSupportAccessDecision
+  +SeparateOperatorResponsibilities(record: ControlPlatformSupportAccessRecord, request: ControlPlatformSupportAccessRequest): ControlPlatformSupportAccessDecision
+  +GrantPurposeBoundSupportAccess(record: ControlPlatformSupportAccessRecord, request: ControlPlatformSupportAccessRequest): ControlPlatformSupportAccessDecision
+  +MaintainSupportCaseLifecycle(record: ControlPlatformSupportAccessRecord, request: ControlPlatformSupportAccessRequest): ControlPlatformSupportAccessDecision
+  +ProvisionAndPreserveOperatorAuthority(record: ControlPlatformSupportAccessRecord, request: ControlPlatformSupportAccessRequest): ControlPlatformSupportAccessDecision
+}
+
+class ControlPlatformSupportAccessHandler {
+  +Handle(request: ControlPlatformSupportAccessRequest): Task<ControlPlatformSupportAccessDecision>
+}
+
+class ControlPlatformSupportAccessProjector {
+  +Project(decision: ControlPlatformSupportAccessDecision): Task<void>
+}
+
+ControlPlatformSupportAccessHandler ..> ControlPlatformSupportAccessRequest : handles
+ControlPlatformSupportAccessHandler ..> ControlPlatformSupportAccessPolicy : evaluates with
+ControlPlatformSupportAccessHandler --> IControlPlatformSupportAccessRepository : loads / commits
+IControlPlatformSupportAccessRepository --> ControlPlatformSupportAccessRecord : persists
+ControlPlatformSupportAccessPolicy ..> ControlPlatformSupportAccessRecord : inspects
+ControlPlatformSupportAccessPolicy --> ControlPlatformSupportAccessDecision : produces
+ControlPlatformSupportAccessRecord ..> ControlPlatformSupportAccessDecision : applies accepted
+ControlPlatformSupportAccessProjector ..> ControlPlatformSupportAccessDecision : consumes committed
+@enduml

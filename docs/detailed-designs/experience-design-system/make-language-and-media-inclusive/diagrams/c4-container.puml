@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers — Make language, locale, and media inclusive
+
+Person(actor, "Product Engineer", "Builds product surfaces from shared interaction contracts")
+System_Ext(external, "Browser and Assistive Technology Matrix", "Supported rendering and interaction environments")
+System_Boundary(system, "Community Experience System") {
+  Container(frontend, "Component Workbench", "Angular and Storybook", "Collects intent and presents current state")
+  Container(backend, "Design Validation Pipeline", "CI workflows", "Applies synchronous boundary and application policy")
+  Container(worker, "Asset Verification Worker", "Pipeline jobs", "Processes idempotent post-commit work")
+  ContainerDb(store, "Design Artifact Registry", "Versioned files", "Stores authoritative state and durable outcomes")
+}
+
+Rel(actor, frontend, "Uses", "HTTPS or local command")
+Rel(frontend, backend, "Submits typed intent", "Typed contract")
+Rel(backend, store, "Reads and conditionally writes", "Transactional adapter")
+Rel(backend, worker, "Publishes committed outcomes", "Durable queue")
+Rel(worker, store, "Reads outcomes and checkpoints", "Idempotent adapter")
+Rel(worker, external, "Invokes eligible external work", "Purpose-bound contract")
+@enduml

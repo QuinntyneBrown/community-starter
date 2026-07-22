@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Deliver useful Feeds
+
+class DeliverUsefulFeedsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class DeliverUsefulFeedsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class DeliverUsefulFeedsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: DeliverUsefulFeedsDecision): void
+}
+
+interface IDeliverUsefulFeedsRepository {
+  +Load(subjectId: string): Task<DeliverUsefulFeedsRecord>
+  +Commit(record: DeliverUsefulFeedsRecord, expectedVersion: long): Task<bool>
+}
+
+class DeliverUsefulFeedsPolicy {
+  +Evaluate(record: DeliverUsefulFeedsRecord, request: DeliverUsefulFeedsRequest): DeliverUsefulFeedsDecision
+  +BuildTheAccountFeed(record: DeliverUsefulFeedsRecord, request: DeliverUsefulFeedsRequest): DeliverUsefulFeedsDecision
+  +BuildACommunityFeed(record: DeliverUsefulFeedsRecord, request: DeliverUsefulFeedsRequest): DeliverUsefulFeedsDecision
+  +PageAFeedConsistently(record: DeliverUsefulFeedsRecord, request: DeliverUsefulFeedsRequest): DeliverUsefulFeedsDecision
+  +ExplainAndControlRanking(record: DeliverUsefulFeedsRecord, request: DeliverUsefulFeedsRequest): DeliverUsefulFeedsDecision
+}
+
+class DeliverUsefulFeedsHandler {
+  +Handle(request: DeliverUsefulFeedsRequest): Task<DeliverUsefulFeedsDecision>
+}
+
+class DeliverUsefulFeedsProjector {
+  +Project(decision: DeliverUsefulFeedsDecision): Task<void>
+}
+
+DeliverUsefulFeedsHandler ..> DeliverUsefulFeedsRequest : handles
+DeliverUsefulFeedsHandler ..> DeliverUsefulFeedsPolicy : evaluates with
+DeliverUsefulFeedsHandler --> IDeliverUsefulFeedsRepository : loads / commits
+IDeliverUsefulFeedsRepository --> DeliverUsefulFeedsRecord : persists
+DeliverUsefulFeedsPolicy ..> DeliverUsefulFeedsRecord : inspects
+DeliverUsefulFeedsPolicy --> DeliverUsefulFeedsDecision : produces
+DeliverUsefulFeedsRecord ..> DeliverUsefulFeedsDecision : applies accepted
+DeliverUsefulFeedsProjector ..> DeliverUsefulFeedsDecision : consumes committed
+@enduml

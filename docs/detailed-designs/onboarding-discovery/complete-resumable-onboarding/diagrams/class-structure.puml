@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Complete resumable onboarding
+
+class CompleteResumableOnboardingRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class CompleteResumableOnboardingDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class CompleteResumableOnboardingRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: CompleteResumableOnboardingDecision): void
+}
+
+interface ICompleteResumableOnboardingRepository {
+  +Load(subjectId: string): Task<CompleteResumableOnboardingRecord>
+  +Commit(record: CompleteResumableOnboardingRecord, expectedVersion: long): Task<bool>
+}
+
+class CompleteResumableOnboardingPolicy {
+  +Evaluate(record: CompleteResumableOnboardingRecord, request: CompleteResumableOnboardingRequest): CompleteResumableOnboardingDecision
+  +StartAndResumeOnboarding(record: CompleteResumableOnboardingRecord, request: CompleteResumableOnboardingRequest): CompleteResumableOnboardingDecision
+  +CompleteRequiredSteps(record: CompleteResumableOnboardingRecord, request: CompleteResumableOnboardingRequest): CompleteResumableOnboardingDecision
+  +ContinueFromAnInvitation(record: CompleteResumableOnboardingRecord, request: CompleteResumableOnboardingRequest): CompleteResumableOnboardingDecision
+}
+
+class CompleteResumableOnboardingHandler {
+  +Handle(request: CompleteResumableOnboardingRequest): Task<CompleteResumableOnboardingDecision>
+}
+
+class CompleteResumableOnboardingProjector {
+  +Project(decision: CompleteResumableOnboardingDecision): Task<void>
+}
+
+CompleteResumableOnboardingHandler ..> CompleteResumableOnboardingRequest : handles
+CompleteResumableOnboardingHandler ..> CompleteResumableOnboardingPolicy : evaluates with
+CompleteResumableOnboardingHandler --> ICompleteResumableOnboardingRepository : loads / commits
+ICompleteResumableOnboardingRepository --> CompleteResumableOnboardingRecord : persists
+CompleteResumableOnboardingPolicy ..> CompleteResumableOnboardingRecord : inspects
+CompleteResumableOnboardingPolicy --> CompleteResumableOnboardingDecision : produces
+CompleteResumableOnboardingRecord ..> CompleteResumableOnboardingDecision : applies accepted
+CompleteResumableOnboardingProjector ..> CompleteResumableOnboardingDecision : consumes committed
+@enduml

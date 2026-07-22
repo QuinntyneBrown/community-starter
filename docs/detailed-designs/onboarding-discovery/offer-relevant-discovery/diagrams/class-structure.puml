@@ -1,0 +1,61 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Offer relevant discovery
+
+class OfferRelevantDiscoveryRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class OfferRelevantDiscoveryDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class OfferRelevantDiscoveryRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: OfferRelevantDiscoveryDecision): void
+}
+
+interface IOfferRelevantDiscoveryRepository {
+  +Load(subjectId: string): Task<OfferRelevantDiscoveryRecord>
+  +Commit(record: OfferRelevantDiscoveryRecord, expectedVersion: long): Task<bool>
+}
+
+class OfferRelevantDiscoveryPolicy {
+  +Evaluate(record: OfferRelevantDiscoveryRecord, request: OfferRelevantDiscoveryRequest): OfferRelevantDiscoveryDecision
+  +DiscoverEligibleCommunities(record: OfferRelevantDiscoveryRecord, request: OfferRelevantDiscoveryRequest): OfferRelevantDiscoveryDecision
+}
+
+class OfferRelevantDiscoveryHandler {
+  +Handle(request: OfferRelevantDiscoveryRequest): Task<OfferRelevantDiscoveryDecision>
+}
+
+class OfferRelevantDiscoveryProjector {
+  +Project(decision: OfferRelevantDiscoveryDecision): Task<void>
+}
+
+OfferRelevantDiscoveryHandler ..> OfferRelevantDiscoveryRequest : handles
+OfferRelevantDiscoveryHandler ..> OfferRelevantDiscoveryPolicy : evaluates with
+OfferRelevantDiscoveryHandler --> IOfferRelevantDiscoveryRepository : loads / commits
+IOfferRelevantDiscoveryRepository --> OfferRelevantDiscoveryRecord : persists
+OfferRelevantDiscoveryPolicy ..> OfferRelevantDiscoveryRecord : inspects
+OfferRelevantDiscoveryPolicy --> OfferRelevantDiscoveryDecision : produces
+OfferRelevantDiscoveryRecord ..> OfferRelevantDiscoveryDecision : applies accepted
+OfferRelevantDiscoveryProjector ..> OfferRelevantDiscoveryDecision : consumes committed
+@enduml

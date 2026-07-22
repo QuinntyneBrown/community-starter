@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Build layered evidence around product risk
+
+class BuildLayeredRiskEvidenceRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class BuildLayeredRiskEvidenceDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class BuildLayeredRiskEvidenceRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: BuildLayeredRiskEvidenceDecision): void
+}
+
+interface IBuildLayeredRiskEvidenceRepository {
+  +Load(subjectId: string): Task<BuildLayeredRiskEvidenceRecord>
+  +Commit(record: BuildLayeredRiskEvidenceRecord, expectedVersion: long): Task<bool>
+}
+
+class BuildLayeredRiskEvidencePolicy {
+  +Evaluate(record: BuildLayeredRiskEvidenceRecord, request: BuildLayeredRiskEvidenceRequest): BuildLayeredRiskEvidenceDecision
+  +TestSelectionFollowsRiskAndEvidenceScope(record: BuildLayeredRiskEvidenceRecord, request: BuildLayeredRiskEvidenceRequest): BuildLayeredRiskEvidenceDecision
+  +ProductRulesAndComponentBehaviorHaveFocusedTests(record: BuildLayeredRiskEvidenceRecord, request: BuildLayeredRiskEvidenceRequest): BuildLayeredRiskEvidenceDecision
+  +IntegrationTestsUseRealProviderBehaviorWhereItMatters(record: BuildLayeredRiskEvidenceRecord, request: BuildLayeredRiskEvidenceRequest): BuildLayeredRiskEvidenceDecision
+  +ContractsJourneysAndDeploymentsReceiveCrossStackEvidence(record: BuildLayeredRiskEvidenceRecord, request: BuildLayeredRiskEvidenceRequest): BuildLayeredRiskEvidenceDecision
+}
+
+class BuildLayeredRiskEvidenceHandler {
+  +Handle(request: BuildLayeredRiskEvidenceRequest): Task<BuildLayeredRiskEvidenceDecision>
+}
+
+class BuildLayeredRiskEvidenceProjector {
+  +Project(decision: BuildLayeredRiskEvidenceDecision): Task<void>
+}
+
+BuildLayeredRiskEvidenceHandler ..> BuildLayeredRiskEvidenceRequest : handles
+BuildLayeredRiskEvidenceHandler ..> BuildLayeredRiskEvidencePolicy : evaluates with
+BuildLayeredRiskEvidenceHandler --> IBuildLayeredRiskEvidenceRepository : loads / commits
+IBuildLayeredRiskEvidenceRepository --> BuildLayeredRiskEvidenceRecord : persists
+BuildLayeredRiskEvidencePolicy ..> BuildLayeredRiskEvidenceRecord : inspects
+BuildLayeredRiskEvidencePolicy --> BuildLayeredRiskEvidenceDecision : produces
+BuildLayeredRiskEvidenceRecord ..> BuildLayeredRiskEvidenceDecision : applies accepted
+BuildLayeredRiskEvidenceProjector ..> BuildLayeredRiskEvidenceDecision : consumes committed
+@enduml

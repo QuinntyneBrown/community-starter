@@ -1,0 +1,59 @@
+@startuml
+title UML sequence behaviour — Cache policy distinguishes immutable and revalidated content
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Visitor" as actor
+box "Frontend — Public Website" #E0F2FE
+  participant "MakePublicDiscoveryCacheSafeSurface" as surface
+  participant "MakePublicDiscoveryCacheSafeClient" as client
+end box
+box "Backend — Public Web Publishing Pipeline" #D1FADF
+  participant "MakePublicDiscoveryCacheSafeEndpoint" as endpoint
+end box
+box "Backend — Public Web Policy and Assembly" #ECFDF3
+  participant "MakePublicDiscoveryCacheSafeHandler" as handler
+  participant "MakePublicDiscoveryCacheSafePolicy" as policy
+end box
+box "Backend — Edge and Build Infrastructure" #FFF4E5
+  database "Public Artifact Manifest" as store
+  participant "MakePublicDiscoveryCacheSafeProjector" as projector
+end box
+
+actor -> surface : Start cache policy distinguishes immutable and revalidated content
+surface -> client : Build typed request
+client -> endpoint : Submit request
+endpoint -> endpoint : Authenticate and apply boundary policy
+endpoint -> handler : Send MakePublicDiscoveryCacheSafeRequest
+handler -> store : Load current scoped state
+store --> handler : Current state and version
+handler -> policy : Enforce L2-MKTG-010 — cache policy distinguishes immutable and revalidated content
+policy --> handler : Typed decision
+alt Decision is accepted
+  opt Requirement changes authoritative state
+    handler -> store : Commit state and outcome conditionally
+    store --> handler : Commit result
+  end
+  opt Committed outcome has derived effects
+    handler -> projector : Publish committed outcome
+    projector --> handler : Accepted for idempotent processing
+  end
+  handler --> endpoint : Accepted feature result
+else Decision is rejected or stale
+  handler --> endpoint : Safe validation, denial, or conflict result
+end
+endpoint --> client : Typed response
+client --> surface : Reconciled feature result
+surface --> actor : Present current outcome
+@enduml

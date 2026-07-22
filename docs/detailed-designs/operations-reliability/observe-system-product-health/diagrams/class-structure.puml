@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Operators can understand system and product health
+
+class ObserveSystemProductHealthRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ObserveSystemProductHealthDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ObserveSystemProductHealthRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ObserveSystemProductHealthDecision): void
+}
+
+interface IObserveSystemProductHealthRepository {
+  +Load(subjectId: string): Task<ObserveSystemProductHealthRecord>
+  +Commit(record: ObserveSystemProductHealthRecord, expectedVersion: long): Task<bool>
+}
+
+class ObserveSystemProductHealthPolicy {
+  +Evaluate(record: ObserveSystemProductHealthRecord, request: ObserveSystemProductHealthRequest): ObserveSystemProductHealthDecision
+  +CorrelateStructuredOperationalTelemetry(record: ObserveSystemProductHealthRecord, request: ObserveSystemProductHealthRequest): ObserveSystemProductHealthDecision
+  +MeasureTechnicalAndProductHealth(record: ObserveSystemProductHealthRecord, request: ObserveSystemProductHealthRequest): ObserveSystemProductHealthDecision
+  +DistinguishLivenessReadinessAndDependencyHealth(record: ObserveSystemProductHealthRecord, request: ObserveSystemProductHealthRequest): ObserveSystemProductHealthDecision
+  +ProvideOwnedOperationalDashboards(record: ObserveSystemProductHealthRecord, request: ObserveSystemProductHealthRequest): ObserveSystemProductHealthDecision
+}
+
+class ObserveSystemProductHealthHandler {
+  +Handle(request: ObserveSystemProductHealthRequest): Task<ObserveSystemProductHealthDecision>
+}
+
+class ObserveSystemProductHealthProjector {
+  +Project(decision: ObserveSystemProductHealthDecision): Task<void>
+}
+
+ObserveSystemProductHealthHandler ..> ObserveSystemProductHealthRequest : handles
+ObserveSystemProductHealthHandler ..> ObserveSystemProductHealthPolicy : evaluates with
+ObserveSystemProductHealthHandler --> IObserveSystemProductHealthRepository : loads / commits
+IObserveSystemProductHealthRepository --> ObserveSystemProductHealthRecord : persists
+ObserveSystemProductHealthPolicy ..> ObserveSystemProductHealthRecord : inspects
+ObserveSystemProductHealthPolicy --> ObserveSystemProductHealthDecision : produces
+ObserveSystemProductHealthRecord ..> ObserveSystemProductHealthDecision : applies accepted
+ObserveSystemProductHealthProjector ..> ObserveSystemProductHealthDecision : consumes committed
+@enduml

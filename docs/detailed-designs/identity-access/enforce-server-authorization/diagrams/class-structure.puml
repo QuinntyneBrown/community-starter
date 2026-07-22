@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Server-owned authorization
+
+class EnforceServerAuthorizationRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class EnforceServerAuthorizationDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class EnforceServerAuthorizationRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: EnforceServerAuthorizationDecision): void
+}
+
+interface IEnforceServerAuthorizationRepository {
+  +Load(subjectId: string): Task<EnforceServerAuthorizationRecord>
+  +Commit(record: EnforceServerAuthorizationRecord, expectedVersion: long): Task<bool>
+}
+
+class EnforceServerAuthorizationPolicy {
+  +Evaluate(record: EnforceServerAuthorizationRecord, request: EnforceServerAuthorizationRequest): EnforceServerAuthorizationDecision
+  +EvaluateCurrentPermissions(record: EnforceServerAuthorizationRecord, request: EnforceServerAuthorizationRequest): EnforceServerAuthorizationDecision
+  +EnforceCommunityBoundaries(record: EnforceServerAuthorizationRecord, request: EnforceServerAuthorizationRequest): EnforceServerAuthorizationDecision
+  +ExposeAllowedActionsSafely(record: EnforceServerAuthorizationRecord, request: EnforceServerAuthorizationRequest): EnforceServerAuthorizationDecision
+}
+
+class EnforceServerAuthorizationHandler {
+  +Handle(request: EnforceServerAuthorizationRequest): Task<EnforceServerAuthorizationDecision>
+}
+
+class EnforceServerAuthorizationProjector {
+  +Project(decision: EnforceServerAuthorizationDecision): Task<void>
+}
+
+EnforceServerAuthorizationHandler ..> EnforceServerAuthorizationRequest : handles
+EnforceServerAuthorizationHandler ..> EnforceServerAuthorizationPolicy : evaluates with
+EnforceServerAuthorizationHandler --> IEnforceServerAuthorizationRepository : loads / commits
+IEnforceServerAuthorizationRepository --> EnforceServerAuthorizationRecord : persists
+EnforceServerAuthorizationPolicy ..> EnforceServerAuthorizationRecord : inspects
+EnforceServerAuthorizationPolicy --> EnforceServerAuthorizationDecision : produces
+EnforceServerAuthorizationRecord ..> EnforceServerAuthorizationDecision : applies accepted
+EnforceServerAuthorizationProjector ..> EnforceServerAuthorizationDecision : consumes committed
+@enduml

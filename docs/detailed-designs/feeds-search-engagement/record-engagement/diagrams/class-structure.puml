@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Record private and public engagement
+
+class RecordEngagementRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class RecordEngagementDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class RecordEngagementRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: RecordEngagementDecision): void
+}
+
+interface IRecordEngagementRepository {
+  +Load(subjectId: string): Task<RecordEngagementRecord>
+  +Commit(record: RecordEngagementRecord, expectedVersion: long): Task<bool>
+}
+
+class RecordEngagementPolicy {
+  +Evaluate(record: RecordEngagementRecord, request: RecordEngagementRequest): RecordEngagementDecision
+  +AddAndRemoveAReaction(record: RecordEngagementRecord, request: RecordEngagementRequest): RecordEngagementDecision
+  +SaveAndRemoveABookmark(record: RecordEngagementRecord, request: RecordEngagementRequest): RecordEngagementDecision
+  +PresentEngagementState(record: RecordEngagementRecord, request: RecordEngagementRequest): RecordEngagementDecision
+}
+
+class RecordEngagementHandler {
+  +Handle(request: RecordEngagementRequest): Task<RecordEngagementDecision>
+}
+
+class RecordEngagementProjector {
+  +Project(decision: RecordEngagementDecision): Task<void>
+}
+
+RecordEngagementHandler ..> RecordEngagementRequest : handles
+RecordEngagementHandler ..> RecordEngagementPolicy : evaluates with
+RecordEngagementHandler --> IRecordEngagementRepository : loads / commits
+IRecordEngagementRepository --> RecordEngagementRecord : persists
+RecordEngagementPolicy ..> RecordEngagementRecord : inspects
+RecordEngagementPolicy --> RecordEngagementDecision : produces
+RecordEngagementRecord ..> RecordEngagementDecision : applies accepted
+RecordEngagementProjector ..> RecordEngagementDecision : consumes committed
+@enduml

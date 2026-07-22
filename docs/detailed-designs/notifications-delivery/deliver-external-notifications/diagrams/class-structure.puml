@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Durable external Delivery
+
+class DeliverExternalNotificationsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class DeliverExternalNotificationsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class DeliverExternalNotificationsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: DeliverExternalNotificationsDecision): void
+}
+
+interface IDeliverExternalNotificationsRepository {
+  +Load(subjectId: string): Task<DeliverExternalNotificationsRecord>
+  +Commit(record: DeliverExternalNotificationsRecord, expectedVersion: long): Task<bool>
+}
+
+class DeliverExternalNotificationsPolicy {
+  +Evaluate(record: DeliverExternalNotificationsRecord, request: DeliverExternalNotificationsRequest): DeliverExternalNotificationsDecision
+  +AttemptEachDeliveryIdempotently(record: DeliverExternalNotificationsRecord, request: DeliverExternalNotificationsRequest): DeliverExternalNotificationsDecision
+  +RetryAndQuarantineTerminalFailures(record: DeliverExternalNotificationsRecord, request: DeliverExternalNotificationsRequest): DeliverExternalNotificationsDecision
+  +ProcessUnsubscribeAndProviderFeedback(record: DeliverExternalNotificationsRecord, request: DeliverExternalNotificationsRequest): DeliverExternalNotificationsDecision
+  +VerifyAndRetireEmailDestinations(record: DeliverExternalNotificationsRecord, request: DeliverExternalNotificationsRequest): DeliverExternalNotificationsDecision
+}
+
+class DeliverExternalNotificationsHandler {
+  +Handle(request: DeliverExternalNotificationsRequest): Task<DeliverExternalNotificationsDecision>
+}
+
+class DeliverExternalNotificationsProjector {
+  +Project(decision: DeliverExternalNotificationsDecision): Task<void>
+}
+
+DeliverExternalNotificationsHandler ..> DeliverExternalNotificationsRequest : handles
+DeliverExternalNotificationsHandler ..> DeliverExternalNotificationsPolicy : evaluates with
+DeliverExternalNotificationsHandler --> IDeliverExternalNotificationsRepository : loads / commits
+IDeliverExternalNotificationsRepository --> DeliverExternalNotificationsRecord : persists
+DeliverExternalNotificationsPolicy ..> DeliverExternalNotificationsRecord : inspects
+DeliverExternalNotificationsPolicy --> DeliverExternalNotificationsDecision : produces
+DeliverExternalNotificationsRecord ..> DeliverExternalNotificationsDecision : applies accepted
+DeliverExternalNotificationsProjector ..> DeliverExternalNotificationsDecision : consumes committed
+@enduml

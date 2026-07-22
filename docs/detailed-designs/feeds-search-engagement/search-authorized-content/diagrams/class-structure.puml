@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Search authorized content
+
+class SearchAuthorizedContentRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class SearchAuthorizedContentDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class SearchAuthorizedContentRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: SearchAuthorizedContentDecision): void
+}
+
+interface ISearchAuthorizedContentRepository {
+  +Load(subjectId: string): Task<SearchAuthorizedContentRecord>
+  +Commit(record: SearchAuthorizedContentRecord, expectedVersion: long): Task<bool>
+}
+
+class SearchAuthorizedContentPolicy {
+  +Evaluate(record: SearchAuthorizedContentRecord, request: SearchAuthorizedContentRequest): SearchAuthorizedContentDecision
+  +SearchEligibleRecords(record: SearchAuthorizedContentRecord, request: SearchAuthorizedContentRequest): SearchAuthorizedContentDecision
+  +FilterAndPageSearchResults(record: SearchAuthorizedContentRecord, request: SearchAuthorizedContentRequest): SearchAuthorizedContentDecision
+  +RemoveStaleSearchResults(record: SearchAuthorizedContentRecord, request: SearchAuthorizedContentRequest): SearchAuthorizedContentDecision
+}
+
+class SearchAuthorizedContentHandler {
+  +Handle(request: SearchAuthorizedContentRequest): Task<SearchAuthorizedContentDecision>
+}
+
+class SearchAuthorizedContentProjector {
+  +Project(decision: SearchAuthorizedContentDecision): Task<void>
+}
+
+SearchAuthorizedContentHandler ..> SearchAuthorizedContentRequest : handles
+SearchAuthorizedContentHandler ..> SearchAuthorizedContentPolicy : evaluates with
+SearchAuthorizedContentHandler --> ISearchAuthorizedContentRepository : loads / commits
+ISearchAuthorizedContentRepository --> SearchAuthorizedContentRecord : persists
+SearchAuthorizedContentPolicy ..> SearchAuthorizedContentRecord : inspects
+SearchAuthorizedContentPolicy --> SearchAuthorizedContentDecision : produces
+SearchAuthorizedContentRecord ..> SearchAuthorizedContentDecision : applies accepted
+SearchAuthorizedContentProjector ..> SearchAuthorizedContentDecision : consumes committed
+@enduml

@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Recipient-controlled attention
+
+class ControlRecipientAttentionRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ControlRecipientAttentionDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ControlRecipientAttentionRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ControlRecipientAttentionDecision): void
+}
+
+interface IControlRecipientAttentionRepository {
+  +Load(subjectId: string): Task<ControlRecipientAttentionRecord>
+  +Commit(record: ControlRecipientAttentionRecord, expectedVersion: long): Task<bool>
+}
+
+class ControlRecipientAttentionPolicy {
+  +Evaluate(record: ControlRecipientAttentionRecord, request: ControlRecipientAttentionRequest): ControlRecipientAttentionDecision
+  +ApplyNotificationPreferences(record: ControlRecipientAttentionRecord, request: ControlRecipientAttentionRequest): ControlRecipientAttentionDecision
+  +LocalizeAccessiblePrivacySafeContent(record: ControlRecipientAttentionRecord, request: ControlRecipientAttentionRequest): ControlRecipientAttentionDecision
+}
+
+class ControlRecipientAttentionHandler {
+  +Handle(request: ControlRecipientAttentionRequest): Task<ControlRecipientAttentionDecision>
+}
+
+class ControlRecipientAttentionProjector {
+  +Project(decision: ControlRecipientAttentionDecision): Task<void>
+}
+
+ControlRecipientAttentionHandler ..> ControlRecipientAttentionRequest : handles
+ControlRecipientAttentionHandler ..> ControlRecipientAttentionPolicy : evaluates with
+ControlRecipientAttentionHandler --> IControlRecipientAttentionRepository : loads / commits
+IControlRecipientAttentionRepository --> ControlRecipientAttentionRecord : persists
+ControlRecipientAttentionPolicy ..> ControlRecipientAttentionRecord : inspects
+ControlRecipientAttentionPolicy --> ControlRecipientAttentionDecision : produces
+ControlRecipientAttentionRecord ..> ControlRecipientAttentionDecision : applies accepted
+ControlRecipientAttentionProjector ..> ControlRecipientAttentionDecision : consumes committed
+@enduml

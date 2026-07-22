@@ -1,0 +1,65 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Control Membership lifecycle
+
+class ControlMembershipLifecycleRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ControlMembershipLifecycleDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ControlMembershipLifecycleRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ControlMembershipLifecycleDecision): void
+}
+
+interface IControlMembershipLifecycleRepository {
+  +Load(subjectId: string): Task<ControlMembershipLifecycleRecord>
+  +Commit(record: ControlMembershipLifecycleRecord, expectedVersion: long): Task<bool>
+}
+
+class ControlMembershipLifecyclePolicy {
+  +Evaluate(record: ControlMembershipLifecycleRecord, request: ControlMembershipLifecycleRequest): ControlMembershipLifecycleDecision
+  +JoinAnOpenCommunity(record: ControlMembershipLifecycleRecord, request: ControlMembershipLifecycleRequest): ControlMembershipLifecycleDecision
+  +RequestGatedMembership(record: ControlMembershipLifecycleRecord, request: ControlMembershipLifecycleRequest): ControlMembershipLifecycleDecision
+  +InviteAnAccount(record: ControlMembershipLifecycleRecord, request: ControlMembershipLifecycleRequest): ControlMembershipLifecycleDecision
+  +LeaveRemoveAndSuspend(record: ControlMembershipLifecycleRecord, request: ControlMembershipLifecycleRequest): ControlMembershipLifecycleDecision
+  +RejoinWithoutDuplicatingMembershipIdentity(record: ControlMembershipLifecycleRecord, request: ControlMembershipLifecycleRequest): ControlMembershipLifecycleDecision
+}
+
+class ControlMembershipLifecycleHandler {
+  +Handle(request: ControlMembershipLifecycleRequest): Task<ControlMembershipLifecycleDecision>
+}
+
+class ControlMembershipLifecycleProjector {
+  +Project(decision: ControlMembershipLifecycleDecision): Task<void>
+}
+
+ControlMembershipLifecycleHandler ..> ControlMembershipLifecycleRequest : handles
+ControlMembershipLifecycleHandler ..> ControlMembershipLifecyclePolicy : evaluates with
+ControlMembershipLifecycleHandler --> IControlMembershipLifecycleRepository : loads / commits
+IControlMembershipLifecycleRepository --> ControlMembershipLifecycleRecord : persists
+ControlMembershipLifecyclePolicy ..> ControlMembershipLifecycleRecord : inspects
+ControlMembershipLifecyclePolicy --> ControlMembershipLifecycleDecision : produces
+ControlMembershipLifecycleRecord ..> ControlMembershipLifecycleDecision : applies accepted
+ControlMembershipLifecycleProjector ..> ControlMembershipLifecycleDecision : consumes committed
+@enduml

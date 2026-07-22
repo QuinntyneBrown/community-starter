@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers — Constrain every untrusted boundary
+
+Person(actor, "Security Engineer", "Reviews security boundaries and production evidence")
+System_Ext(external, "Identity, Secret, and Scan Providers", "Protected identity, key, and vulnerability services")
+System_Boundary(system, "Community Platform Security") {
+  Container(frontend, "Security Operations Console", "Web application and review tools", "Collects intent and presents current state")
+  Container(backend, "Security Control API", "Policy and automation services", "Applies synchronous boundary and application policy")
+  Container(worker, "Security Verification Worker", "Scanning and evidence jobs", "Processes idempotent post-commit work")
+  ContainerDb(store, "Security Evidence Store", "Protected relational and object storage", "Stores authoritative state and durable outcomes")
+}
+
+Rel(actor, frontend, "Uses", "HTTPS or local command")
+Rel(frontend, backend, "Submits typed intent", "Typed contract")
+Rel(backend, store, "Reads and conditionally writes", "Transactional adapter")
+Rel(backend, worker, "Publishes committed outcomes", "Durable queue")
+Rel(worker, store, "Reads outcomes and checkpoints", "Idempotent adapter")
+Rel(worker, external, "Invokes eligible external work", "Purpose-bound contract")
+@enduml

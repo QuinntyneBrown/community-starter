@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers — People can access and control their data
+
+Person(actor, "Account Holder", "Controls personal data and Account lifecycle choices")
+System_Ext(external, "Data Processors", "Process purpose-bound data under lifecycle controls")
+System_Boundary(system, "Community Platform") {
+  Container(frontend, "Member Web Application", "Angular", "Collects intent and presents current state")
+  Container(backend, "Community API", "ASP.NET Core", "Applies synchronous boundary and application policy")
+  Container(worker, "Community Job Worker", ".NET background worker", "Processes idempotent post-commit work")
+  ContainerDb(store, "Community Database", "Relational database", "Stores authoritative state and durable outcomes")
+}
+
+Rel(actor, frontend, "Uses", "HTTPS or local command")
+Rel(frontend, backend, "Submits typed intent", "Typed contract")
+Rel(backend, store, "Reads and conditionally writes", "Transactional adapter")
+Rel(backend, worker, "Publishes committed outcomes", "Durable queue")
+Rel(worker, store, "Reads outcomes and checkpoints", "Idempotent adapter")
+Rel(worker, external, "Invokes eligible external work", "Purpose-bound contract")
+@enduml

@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Teams can specialize the starter safely
+
+class SpecializeStarterSafelyRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class SpecializeStarterSafelyDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class SpecializeStarterSafelyRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: SpecializeStarterSafelyDecision): void
+}
+
+interface ISpecializeStarterSafelyRepository {
+  +Load(subjectId: string): Task<SpecializeStarterSafelyRecord>
+  +Commit(record: SpecializeStarterSafelyRecord, expectedVersion: long): Task<bool>
+}
+
+class SpecializeStarterSafelyPolicy {
+  +Evaluate(record: SpecializeStarterSafelyRecord, request: SpecializeStarterSafelyRequest): SpecializeStarterSafelyDecision
+  +ApplyAndVerifyProductIdentity(record: SpecializeStarterSafelyRecord, request: SpecializeStarterSafelyRequest): SpecializeStarterSafelyDecision
+  +SpecializeTheSharedVisualLanguage(record: SpecializeStarterSafelyRecord, request: SpecializeStarterSafelyRequest): SpecializeStarterSafelyDecision
+  +ConfigureOptionalCapabilityProfiles(record: SpecializeStarterSafelyRecord, request: SpecializeStarterSafelyRequest): SpecializeStarterSafelyDecision
+  +RecordProviderAndArchitectureDecisions(record: SpecializeStarterSafelyRecord, request: SpecializeStarterSafelyRequest): SpecializeStarterSafelyDecision
+}
+
+class SpecializeStarterSafelyHandler {
+  +Handle(request: SpecializeStarterSafelyRequest): Task<SpecializeStarterSafelyDecision>
+}
+
+class SpecializeStarterSafelyProjector {
+  +Project(decision: SpecializeStarterSafelyDecision): Task<void>
+}
+
+SpecializeStarterSafelyHandler ..> SpecializeStarterSafelyRequest : handles
+SpecializeStarterSafelyHandler ..> SpecializeStarterSafelyPolicy : evaluates with
+SpecializeStarterSafelyHandler --> ISpecializeStarterSafelyRepository : loads / commits
+ISpecializeStarterSafelyRepository --> SpecializeStarterSafelyRecord : persists
+SpecializeStarterSafelyPolicy ..> SpecializeStarterSafelyRecord : inspects
+SpecializeStarterSafelyPolicy --> SpecializeStarterSafelyDecision : produces
+SpecializeStarterSafelyRecord ..> SpecializeStarterSafelyDecision : applies accepted
+SpecializeStarterSafelyProjector ..> SpecializeStarterSafelyDecision : consumes committed
+@enduml

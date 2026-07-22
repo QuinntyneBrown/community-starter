@@ -1,0 +1,23 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components — Data and service can be recovered
+
+Container(frontend, "Operations Console", "Web dashboard and runbook tools", "Presents state and sends typed intent")
+Container_Boundary(backend, "Operations Control API") {
+  Component(endpoint, "RecoverDataServicesEndpoint", "operations command endpoint", "Authenticates and dispatches feature requests")
+  Component(handler, "RecoverDataServicesHandler", "Application service", "Coordinates authorized state and one unit of work")
+  Component(policy, "RecoverDataServicesPolicy", "Domain policy", "Evaluates traced behavior against current state")
+  Component(repository, "IRecoverDataServicesRepository", "Persistence port", "Loads scoped state and commits conditionally")
+  Component(projector, "RecoverDataServicesProjector", "Post-commit component", "Processes committed outcomes idempotently")
+  ComponentDb(store, "Operations Evidence Store", "Relational and object storage", "Stores state, versions, outcomes, and checkpoints")
+}
+
+Rel(frontend, endpoint, "Submits RecoverDataServicesRequest", "Typed contract")
+Rel(endpoint, handler, "Dispatches request")
+Rel(handler, policy, "Evaluates current state")
+Rel(handler, repository, "Loads and commits")
+Rel(repository, store, "Reads and writes", "Transactional adapter")
+Rel(handler, projector, "Publishes committed outcome", "Durable handoff")
+Rel(projector, store, "Checkpoints processing", "Idempotent adapter")
+@enduml

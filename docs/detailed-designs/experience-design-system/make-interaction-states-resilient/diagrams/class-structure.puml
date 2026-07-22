@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Make every material interaction state resilient
+
+class MakeInteractionStatesResilientRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class MakeInteractionStatesResilientDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class MakeInteractionStatesResilientRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: MakeInteractionStatesResilientDecision): void
+}
+
+interface IMakeInteractionStatesResilientRepository {
+  +Load(subjectId: string): Task<MakeInteractionStatesResilientRecord>
+  +Commit(record: MakeInteractionStatesResilientRecord, expectedVersion: long): Task<bool>
+}
+
+class MakeInteractionStatesResilientPolicy {
+  +Evaluate(record: MakeInteractionStatesResilientRecord, request: MakeInteractionStatesResilientRequest): MakeInteractionStatesResilientDecision
+  +TemplatesAndNavigationUseSemanticWebBehavior(record: MakeInteractionStatesResilientRecord, request: MakeInteractionStatesResilientRequest): MakeInteractionStatesResilientDecision
+  +StylingLayoutMotionIconsAndMediaFollowSystemRules(record: MakeInteractionStatesResilientRecord, request: MakeInteractionStatesResilientRequest): MakeInteractionStatesResilientDecision
+  +FeatureStatesAreCompleteAndServerTruthIsReconciled(record: MakeInteractionStatesResilientRecord, request: MakeInteractionStatesResilientRequest): MakeInteractionStatesResilientDecision
+}
+
+class MakeInteractionStatesResilientHandler {
+  +Handle(request: MakeInteractionStatesResilientRequest): Task<MakeInteractionStatesResilientDecision>
+}
+
+class MakeInteractionStatesResilientProjector {
+  +Project(decision: MakeInteractionStatesResilientDecision): Task<void>
+}
+
+MakeInteractionStatesResilientHandler ..> MakeInteractionStatesResilientRequest : handles
+MakeInteractionStatesResilientHandler ..> MakeInteractionStatesResilientPolicy : evaluates with
+MakeInteractionStatesResilientHandler --> IMakeInteractionStatesResilientRepository : loads / commits
+IMakeInteractionStatesResilientRepository --> MakeInteractionStatesResilientRecord : persists
+MakeInteractionStatesResilientPolicy ..> MakeInteractionStatesResilientRecord : inspects
+MakeInteractionStatesResilientPolicy --> MakeInteractionStatesResilientDecision : produces
+MakeInteractionStatesResilientRecord ..> MakeInteractionStatesResilientDecision : applies accepted
+MakeInteractionStatesResilientProjector ..> MakeInteractionStatesResilientDecision : consumes committed
+@enduml

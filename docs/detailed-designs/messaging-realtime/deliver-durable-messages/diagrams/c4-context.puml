@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Durable and safe Messages
+
+Person(actor, "Community Member", "Participates in consent-based direct Conversations")
+System(system, "Community Platform", "Community participation, administration, and safety system")
+System_Ext(external, "Realtime Delivery Infrastructure", "Carries revocable hints after committed Message state")
+
+Rel(actor, system, "Uses for durable and safe Messages", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

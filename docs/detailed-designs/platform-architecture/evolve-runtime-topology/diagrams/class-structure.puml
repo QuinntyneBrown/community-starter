@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Evolve runtime topology without weakening correctness
+
+class EvolveRuntimeTopologyRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class EvolveRuntimeTopologyDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class EvolveRuntimeTopologyRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: EvolveRuntimeTopologyDecision): void
+}
+
+interface IEvolveRuntimeTopologyRepository {
+  +Load(subjectId: string): Task<EvolveRuntimeTopologyRecord>
+  +Commit(record: EvolveRuntimeTopologyRecord, expectedVersion: long): Task<bool>
+}
+
+class EvolveRuntimeTopologyPolicy {
+  +Evaluate(record: EvolveRuntimeTopologyRecord, request: EvolveRuntimeTopologyRequest): EvolveRuntimeTopologyDecision
+  +RealtimeDeliveryFollowsCommittedStateAndReconciles(record: EvolveRuntimeTopologyRecord, request: EvolveRuntimeTopologyRequest): EvolveRuntimeTopologyDecision
+  +InitialDeploymentIsCohesiveWhileSourceBoundariesRemainSeparable(record: EvolveRuntimeTopologyRecord, request: EvolveRuntimeTopologyRequest): EvolveRuntimeTopologyDecision
+}
+
+class EvolveRuntimeTopologyHandler {
+  +Handle(request: EvolveRuntimeTopologyRequest): Task<EvolveRuntimeTopologyDecision>
+}
+
+class EvolveRuntimeTopologyProjector {
+  +Project(decision: EvolveRuntimeTopologyDecision): Task<void>
+}
+
+EvolveRuntimeTopologyHandler ..> EvolveRuntimeTopologyRequest : handles
+EvolveRuntimeTopologyHandler ..> EvolveRuntimeTopologyPolicy : evaluates with
+EvolveRuntimeTopologyHandler --> IEvolveRuntimeTopologyRepository : loads / commits
+IEvolveRuntimeTopologyRepository --> EvolveRuntimeTopologyRecord : persists
+EvolveRuntimeTopologyPolicy ..> EvolveRuntimeTopologyRecord : inspects
+EvolveRuntimeTopologyPolicy --> EvolveRuntimeTopologyDecision : produces
+EvolveRuntimeTopologyRecord ..> EvolveRuntimeTopologyDecision : applies accepted
+EvolveRuntimeTopologyProjector ..> EvolveRuntimeTopologyDecision : consumes committed
+@enduml

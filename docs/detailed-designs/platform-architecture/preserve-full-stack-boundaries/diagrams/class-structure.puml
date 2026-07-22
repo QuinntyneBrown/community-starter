@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Preserve explicit full-stack boundaries
+
+class PreserveFullStackBoundariesRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class PreserveFullStackBoundariesDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class PreserveFullStackBoundariesRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: PreserveFullStackBoundariesDecision): void
+}
+
+interface IPreserveFullStackBoundariesRepository {
+  +Load(subjectId: string): Task<PreserveFullStackBoundariesRecord>
+  +Commit(record: PreserveFullStackBoundariesRecord, expectedVersion: long): Task<bool>
+}
+
+class PreserveFullStackBoundariesPolicy {
+  +Evaluate(record: PreserveFullStackBoundariesRecord, request: PreserveFullStackBoundariesRequest): PreserveFullStackBoundariesDecision
+  +RuntimeAndRepositorySurfacesAreExplicit(record: PreserveFullStackBoundariesRecord, request: PreserveFullStackBoundariesRequest): PreserveFullStackBoundariesDecision
+  +BackendDependenciesPointInward(record: PreserveFullStackBoundariesRecord, request: PreserveFullStackBoundariesRequest): PreserveFullStackBoundariesDecision
+  +AngularLibrariesHaveStableOwnership(record: PreserveFullStackBoundariesRecord, request: PreserveFullStackBoundariesRequest): PreserveFullStackBoundariesDecision
+}
+
+class PreserveFullStackBoundariesHandler {
+  +Handle(request: PreserveFullStackBoundariesRequest): Task<PreserveFullStackBoundariesDecision>
+}
+
+class PreserveFullStackBoundariesProjector {
+  +Project(decision: PreserveFullStackBoundariesDecision): Task<void>
+}
+
+PreserveFullStackBoundariesHandler ..> PreserveFullStackBoundariesRequest : handles
+PreserveFullStackBoundariesHandler ..> PreserveFullStackBoundariesPolicy : evaluates with
+PreserveFullStackBoundariesHandler --> IPreserveFullStackBoundariesRepository : loads / commits
+IPreserveFullStackBoundariesRepository --> PreserveFullStackBoundariesRecord : persists
+PreserveFullStackBoundariesPolicy ..> PreserveFullStackBoundariesRecord : inspects
+PreserveFullStackBoundariesPolicy --> PreserveFullStackBoundariesDecision : produces
+PreserveFullStackBoundariesRecord ..> PreserveFullStackBoundariesDecision : applies accepted
+PreserveFullStackBoundariesProjector ..> PreserveFullStackBoundariesDecision : consumes committed
+@enduml

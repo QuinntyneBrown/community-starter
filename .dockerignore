@@ -1,0 +1,12 @@
+.git
+.github
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/.angular
+**/.astro
+**/TestResults
+artifacts
+.env*
+docs/detailed-designs/**/diagrams/*.png

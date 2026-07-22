@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Durable and safe Messages
+
+class DeliverDurableMessagesRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class DeliverDurableMessagesDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class DeliverDurableMessagesRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: DeliverDurableMessagesDecision): void
+}
+
+interface IDeliverDurableMessagesRepository {
+  +Load(subjectId: string): Task<DeliverDurableMessagesRecord>
+  +Commit(record: DeliverDurableMessagesRecord, expectedVersion: long): Task<bool>
+}
+
+class DeliverDurableMessagesPolicy {
+  +Evaluate(record: DeliverDurableMessagesRecord, request: DeliverDurableMessagesRequest): DeliverDurableMessagesDecision
+  +CommitOneValidatedMessage(record: DeliverDurableMessagesRecord, request: DeliverDurableMessagesRequest): DeliverDurableMessagesDecision
+  +PageMessagesAndTrackReadingPrivately(record: DeliverDurableMessagesRecord, request: DeliverDurableMessagesRequest): DeliverDurableMessagesDecision
+  +ApplyEditDeletionAndRetentionPolicy(record: DeliverDurableMessagesRecord, request: DeliverDurableMessagesRequest): DeliverDurableMessagesDecision
+  +ReportAMessageWithoutLosingEvidence(record: DeliverDurableMessagesRecord, request: DeliverDurableMessagesRequest): DeliverDurableMessagesDecision
+}
+
+class DeliverDurableMessagesHandler {
+  +Handle(request: DeliverDurableMessagesRequest): Task<DeliverDurableMessagesDecision>
+}
+
+class DeliverDurableMessagesProjector {
+  +Project(decision: DeliverDurableMessagesDecision): Task<void>
+}
+
+DeliverDurableMessagesHandler ..> DeliverDurableMessagesRequest : handles
+DeliverDurableMessagesHandler ..> DeliverDurableMessagesPolicy : evaluates with
+DeliverDurableMessagesHandler --> IDeliverDurableMessagesRepository : loads / commits
+IDeliverDurableMessagesRepository --> DeliverDurableMessagesRecord : persists
+DeliverDurableMessagesPolicy ..> DeliverDurableMessagesRecord : inspects
+DeliverDurableMessagesPolicy --> DeliverDurableMessagesDecision : produces
+DeliverDurableMessagesRecord ..> DeliverDurableMessagesDecision : applies accepted
+DeliverDurableMessagesProjector ..> DeliverDurableMessagesDecision : consumes committed
+@enduml

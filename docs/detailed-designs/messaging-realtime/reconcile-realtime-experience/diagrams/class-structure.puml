@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Reconciled realtime experience
+
+class ReconcileRealtimeExperienceRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ReconcileRealtimeExperienceDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ReconcileRealtimeExperienceRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ReconcileRealtimeExperienceDecision): void
+}
+
+interface IReconcileRealtimeExperienceRepository {
+  +Load(subjectId: string): Task<ReconcileRealtimeExperienceRecord>
+  +Commit(record: ReconcileRealtimeExperienceRecord, expectedVersion: long): Task<bool>
+}
+
+class ReconcileRealtimeExperiencePolicy {
+  +Evaluate(record: ReconcileRealtimeExperienceRecord, request: ReconcileRealtimeExperienceRequest): ReconcileRealtimeExperienceDecision
+  +PublishOnlyCommittedMessageEvents(record: ReconcileRealtimeExperienceRecord, request: ReconcileRealtimeExperienceRequest): ReconcileRealtimeExperienceDecision
+  +ReconnectAndReconcileFromTheAPI(record: ReconcileRealtimeExperienceRecord, request: ReconcileRealtimeExperienceRequest): ReconcileRealtimeExperienceDecision
+  +ScopeRealtimeSubscriptionsOnTheServer(record: ReconcileRealtimeExperienceRecord, request: ReconcileRealtimeExperienceRequest): ReconcileRealtimeExperienceDecision
+}
+
+class ReconcileRealtimeExperienceHandler {
+  +Handle(request: ReconcileRealtimeExperienceRequest): Task<ReconcileRealtimeExperienceDecision>
+}
+
+class ReconcileRealtimeExperienceProjector {
+  +Project(decision: ReconcileRealtimeExperienceDecision): Task<void>
+}
+
+ReconcileRealtimeExperienceHandler ..> ReconcileRealtimeExperienceRequest : handles
+ReconcileRealtimeExperienceHandler ..> ReconcileRealtimeExperiencePolicy : evaluates with
+ReconcileRealtimeExperienceHandler --> IReconcileRealtimeExperienceRepository : loads / commits
+IReconcileRealtimeExperienceRepository --> ReconcileRealtimeExperienceRecord : persists
+ReconcileRealtimeExperiencePolicy ..> ReconcileRealtimeExperienceRecord : inspects
+ReconcileRealtimeExperiencePolicy --> ReconcileRealtimeExperienceDecision : produces
+ReconcileRealtimeExperienceRecord ..> ReconcileRealtimeExperienceDecision : applies accepted
+ReconcileRealtimeExperienceProjector ..> ReconcileRealtimeExperienceDecision : consumes committed
+@enduml

@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Preserve content integrity
+
+class PreserveContentIntegrityRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class PreserveContentIntegrityDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class PreserveContentIntegrityRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: PreserveContentIntegrityDecision): void
+}
+
+interface IPreserveContentIntegrityRepository {
+  +Load(subjectId: string): Task<PreserveContentIntegrityRecord>
+  +Commit(record: PreserveContentIntegrityRecord, expectedVersion: long): Task<bool>
+}
+
+class PreserveContentIntegrityPolicy {
+  +Evaluate(record: PreserveContentIntegrityRecord, request: PreserveContentIntegrityRequest): PreserveContentIntegrityDecision
+  +ApplyTagsConsistently(record: PreserveContentIntegrityRecord, request: PreserveContentIntegrityRequest): PreserveContentIntegrityDecision
+  +ValidateAndRenderSafely(record: PreserveContentIntegrityRecord, request: PreserveContentIntegrityRequest): PreserveContentIntegrityDecision
+  +CommitContentAtomically(record: PreserveContentIntegrityRecord, request: PreserveContentIntegrityRequest): PreserveContentIntegrityDecision
+  +ResolveMentionsAndQuoteReferences(record: PreserveContentIntegrityRecord, request: PreserveContentIntegrityRequest): PreserveContentIntegrityDecision
+}
+
+class PreserveContentIntegrityHandler {
+  +Handle(request: PreserveContentIntegrityRequest): Task<PreserveContentIntegrityDecision>
+}
+
+class PreserveContentIntegrityProjector {
+  +Project(decision: PreserveContentIntegrityDecision): Task<void>
+}
+
+PreserveContentIntegrityHandler ..> PreserveContentIntegrityRequest : handles
+PreserveContentIntegrityHandler ..> PreserveContentIntegrityPolicy : evaluates with
+PreserveContentIntegrityHandler --> IPreserveContentIntegrityRepository : loads / commits
+IPreserveContentIntegrityRepository --> PreserveContentIntegrityRecord : persists
+PreserveContentIntegrityPolicy ..> PreserveContentIntegrityRecord : inspects
+PreserveContentIntegrityPolicy --> PreserveContentIntegrityDecision : produces
+PreserveContentIntegrityRecord ..> PreserveContentIntegrityDecision : applies accepted
+PreserveContentIntegrityProjector ..> PreserveContentIntegrityDecision : consumes committed
+@enduml

@@ -1,0 +1,56 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en-CA">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <a class="cs-skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Community Starter home">
+        <span class="brand__mark" aria-hidden="true">CS</span>
+        <span>Community Starter</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="/communities">Communities</a>
+        <a href="/about">About</a>
+        <a href="/support">Support</a>
+      </nav>
+      <a class="cs-button site-header__action" href="/app/sign-in">Sign in</a>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer cs-shell">
+      <p>
+        <strong>Community Starter</strong><br />A safer place to gather,
+        contribute, and belong.
+      </p>
+      <nav aria-label="Legal and support">
+        <a href="/privacy">Privacy</a>
+        <a href="/accessibility">Accessibility</a>
+        <a href="/support">Support</a>
+      </nav>
+      <p>© {new Date().getUTCFullYear()} Community Starter.</p>
+    </footer>
+  </body>
+</html>

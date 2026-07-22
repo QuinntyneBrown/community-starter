@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Harden browsers, dependencies, and deployment credentials
+
+class HardenRuntimeSupplyChainRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class HardenRuntimeSupplyChainDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class HardenRuntimeSupplyChainRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: HardenRuntimeSupplyChainDecision): void
+}
+
+interface IHardenRuntimeSupplyChainRepository {
+  +Load(subjectId: string): Task<HardenRuntimeSupplyChainRecord>
+  +Commit(record: HardenRuntimeSupplyChainRecord, expectedVersion: long): Task<bool>
+}
+
+class HardenRuntimeSupplyChainPolicy {
+  +Evaluate(record: HardenRuntimeSupplyChainRecord, request: HardenRuntimeSupplyChainRequest): HardenRuntimeSupplyChainDecision
+  +BrowserAndTransportHeadersMatchTheDeploymentThreatModel(record: HardenRuntimeSupplyChainRecord, request: HardenRuntimeSupplyChainRequest): HardenRuntimeSupplyChainDecision
+  +DeploymentUsesProtectedEnvironmentsAndShortLivedCredentials(record: HardenRuntimeSupplyChainRecord, request: HardenRuntimeSupplyChainRequest): HardenRuntimeSupplyChainDecision
+  +SupplyChainChangesAreReviewedAndContinuouslyScanned(record: HardenRuntimeSupplyChainRecord, request: HardenRuntimeSupplyChainRequest): HardenRuntimeSupplyChainDecision
+}
+
+class HardenRuntimeSupplyChainHandler {
+  +Handle(request: HardenRuntimeSupplyChainRequest): Task<HardenRuntimeSupplyChainDecision>
+}
+
+class HardenRuntimeSupplyChainProjector {
+  +Project(decision: HardenRuntimeSupplyChainDecision): Task<void>
+}
+
+HardenRuntimeSupplyChainHandler ..> HardenRuntimeSupplyChainRequest : handles
+HardenRuntimeSupplyChainHandler ..> HardenRuntimeSupplyChainPolicy : evaluates with
+HardenRuntimeSupplyChainHandler --> IHardenRuntimeSupplyChainRepository : loads / commits
+IHardenRuntimeSupplyChainRepository --> HardenRuntimeSupplyChainRecord : persists
+HardenRuntimeSupplyChainPolicy ..> HardenRuntimeSupplyChainRecord : inspects
+HardenRuntimeSupplyChainPolicy --> HardenRuntimeSupplyChainDecision : produces
+HardenRuntimeSupplyChainRecord ..> HardenRuntimeSupplyChainDecision : applies accepted
+HardenRuntimeSupplyChainProjector ..> HardenRuntimeSupplyChainDecision : consumes committed
+@enduml

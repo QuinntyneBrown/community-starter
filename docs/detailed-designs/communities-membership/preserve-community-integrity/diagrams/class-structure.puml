@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Preserve Community integrity
+
+class PreserveCommunityIntegrityRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class PreserveCommunityIntegrityDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class PreserveCommunityIntegrityRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: PreserveCommunityIntegrityDecision): void
+}
+
+interface IPreserveCommunityIntegrityRepository {
+  +Load(subjectId: string): Task<PreserveCommunityIntegrityRecord>
+  +Commit(record: PreserveCommunityIntegrityRecord, expectedVersion: long): Task<bool>
+}
+
+class PreserveCommunityIntegrityPolicy {
+  +Evaluate(record: PreserveCommunityIntegrityRecord, request: PreserveCommunityIntegrityRequest): PreserveCommunityIntegrityDecision
+  +IsolateCommunityState(record: PreserveCommunityIntegrityRecord, request: PreserveCommunityIntegrityRequest): PreserveCommunityIntegrityDecision
+  +EnforceLimitsAndConcurrency(record: PreserveCommunityIntegrityRecord, request: PreserveCommunityIntegrityRequest): PreserveCommunityIntegrityDecision
+}
+
+class PreserveCommunityIntegrityHandler {
+  +Handle(request: PreserveCommunityIntegrityRequest): Task<PreserveCommunityIntegrityDecision>
+}
+
+class PreserveCommunityIntegrityProjector {
+  +Project(decision: PreserveCommunityIntegrityDecision): Task<void>
+}
+
+PreserveCommunityIntegrityHandler ..> PreserveCommunityIntegrityRequest : handles
+PreserveCommunityIntegrityHandler ..> PreserveCommunityIntegrityPolicy : evaluates with
+PreserveCommunityIntegrityHandler --> IPreserveCommunityIntegrityRepository : loads / commits
+IPreserveCommunityIntegrityRepository --> PreserveCommunityIntegrityRecord : persists
+PreserveCommunityIntegrityPolicy ..> PreserveCommunityIntegrityRecord : inspects
+PreserveCommunityIntegrityPolicy --> PreserveCommunityIntegrityDecision : produces
+PreserveCommunityIntegrityRecord ..> PreserveCommunityIntegrityDecision : applies accepted
+PreserveCommunityIntegrityProjector ..> PreserveCommunityIntegrityDecision : consumes committed
+@enduml

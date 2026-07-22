@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Meet an inclusive accessibility baseline
+
+class MeetAccessibilityBaselineRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class MeetAccessibilityBaselineDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class MeetAccessibilityBaselineRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: MeetAccessibilityBaselineDecision): void
+}
+
+interface IMeetAccessibilityBaselineRepository {
+  +Load(subjectId: string): Task<MeetAccessibilityBaselineRecord>
+  +Commit(record: MeetAccessibilityBaselineRecord, expectedVersion: long): Task<bool>
+}
+
+class MeetAccessibilityBaselinePolicy {
+  +Evaluate(record: MeetAccessibilityBaselineRecord, request: MeetAccessibilityBaselineRequest): MeetAccessibilityBaselineDecision
+  +SharedPrimitivesAreSemanticAndOperable(record: MeetAccessibilityBaselineRecord, request: MeetAccessibilityBaselineRequest): MeetAccessibilityBaselineDecision
+  +DynamicStatusAndResponsiveCompositionRemainAccessible(record: MeetAccessibilityBaselineRecord, request: MeetAccessibilityBaselineRequest): MeetAccessibilityBaselineDecision
+}
+
+class MeetAccessibilityBaselineHandler {
+  +Handle(request: MeetAccessibilityBaselineRequest): Task<MeetAccessibilityBaselineDecision>
+}
+
+class MeetAccessibilityBaselineProjector {
+  +Project(decision: MeetAccessibilityBaselineDecision): Task<void>
+}
+
+MeetAccessibilityBaselineHandler ..> MeetAccessibilityBaselineRequest : handles
+MeetAccessibilityBaselineHandler ..> MeetAccessibilityBaselinePolicy : evaluates with
+MeetAccessibilityBaselineHandler --> IMeetAccessibilityBaselineRepository : loads / commits
+IMeetAccessibilityBaselineRepository --> MeetAccessibilityBaselineRecord : persists
+MeetAccessibilityBaselinePolicy ..> MeetAccessibilityBaselineRecord : inspects
+MeetAccessibilityBaselinePolicy --> MeetAccessibilityBaselineDecision : produces
+MeetAccessibilityBaselineRecord ..> MeetAccessibilityBaselineDecision : applies accepted
+MeetAccessibilityBaselineProjector ..> MeetAccessibilityBaselineDecision : consumes committed
+@enduml

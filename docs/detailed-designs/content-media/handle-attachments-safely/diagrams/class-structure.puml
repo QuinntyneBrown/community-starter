@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Handle Attachments safely
+
+class HandleAttachmentsSafelyRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class HandleAttachmentsSafelyDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class HandleAttachmentsSafelyRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: HandleAttachmentsSafelyDecision): void
+}
+
+interface IHandleAttachmentsSafelyRepository {
+  +Load(subjectId: string): Task<HandleAttachmentsSafelyRecord>
+  +Commit(record: HandleAttachmentsSafelyRecord, expectedVersion: long): Task<bool>
+}
+
+class HandleAttachmentsSafelyPolicy {
+  +Evaluate(record: HandleAttachmentsSafelyRecord, request: HandleAttachmentsSafelyRequest): HandleAttachmentsSafelyDecision
+  +StageAnAttachment(record: HandleAttachmentsSafelyRecord, request: HandleAttachmentsSafelyRequest): HandleAttachmentsSafelyDecision
+  +ProcessAnAttachment(record: HandleAttachmentsSafelyRecord, request: HandleAttachmentsSafelyRequest): HandleAttachmentsSafelyDecision
+  +ProtectAttachmentAccess(record: HandleAttachmentsSafelyRecord, request: HandleAttachmentsSafelyRequest): HandleAttachmentsSafelyDecision
+}
+
+class HandleAttachmentsSafelyHandler {
+  +Handle(request: HandleAttachmentsSafelyRequest): Task<HandleAttachmentsSafelyDecision>
+}
+
+class HandleAttachmentsSafelyProjector {
+  +Project(decision: HandleAttachmentsSafelyDecision): Task<void>
+}
+
+HandleAttachmentsSafelyHandler ..> HandleAttachmentsSafelyRequest : handles
+HandleAttachmentsSafelyHandler ..> HandleAttachmentsSafelyPolicy : evaluates with
+HandleAttachmentsSafelyHandler --> IHandleAttachmentsSafelyRepository : loads / commits
+IHandleAttachmentsSafelyRepository --> HandleAttachmentsSafelyRecord : persists
+HandleAttachmentsSafelyPolicy ..> HandleAttachmentsSafelyRecord : inspects
+HandleAttachmentsSafelyPolicy --> HandleAttachmentsSafelyDecision : produces
+HandleAttachmentsSafelyRecord ..> HandleAttachmentsSafelyDecision : applies accepted
+HandleAttachmentsSafelyProjector ..> HandleAttachmentsSafelyDecision : consumes committed
+@enduml

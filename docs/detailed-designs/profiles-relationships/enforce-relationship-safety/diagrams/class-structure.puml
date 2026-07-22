@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Enforce relationship safety
+
+class EnforceRelationshipSafetyRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class EnforceRelationshipSafetyDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class EnforceRelationshipSafetyRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: EnforceRelationshipSafetyDecision): void
+}
+
+interface IEnforceRelationshipSafetyRepository {
+  +Load(subjectId: string): Task<EnforceRelationshipSafetyRecord>
+  +Commit(record: EnforceRelationshipSafetyRecord, expectedVersion: long): Task<bool>
+}
+
+class EnforceRelationshipSafetyPolicy {
+  +Evaluate(record: EnforceRelationshipSafetyRecord, request: EnforceRelationshipSafetyRequest): EnforceRelationshipSafetyDecision
+  +BlockAnotherAccount(record: EnforceRelationshipSafetyRecord, request: EnforceRelationshipSafetyRequest): EnforceRelationshipSafetyDecision
+  +MuteAnotherAccount(record: EnforceRelationshipSafetyRecord, request: EnforceRelationshipSafetyRequest): EnforceRelationshipSafetyDecision
+  +ResolveBlockAndMutePrecedence(record: EnforceRelationshipSafetyRecord, request: EnforceRelationshipSafetyRequest): EnforceRelationshipSafetyDecision
+  +EnforceTheSharedCommunityBlockMatrix(record: EnforceRelationshipSafetyRecord, request: EnforceRelationshipSafetyRequest): EnforceRelationshipSafetyDecision
+}
+
+class EnforceRelationshipSafetyHandler {
+  +Handle(request: EnforceRelationshipSafetyRequest): Task<EnforceRelationshipSafetyDecision>
+}
+
+class EnforceRelationshipSafetyProjector {
+  +Project(decision: EnforceRelationshipSafetyDecision): Task<void>
+}
+
+EnforceRelationshipSafetyHandler ..> EnforceRelationshipSafetyRequest : handles
+EnforceRelationshipSafetyHandler ..> EnforceRelationshipSafetyPolicy : evaluates with
+EnforceRelationshipSafetyHandler --> IEnforceRelationshipSafetyRepository : loads / commits
+IEnforceRelationshipSafetyRepository --> EnforceRelationshipSafetyRecord : persists
+EnforceRelationshipSafetyPolicy ..> EnforceRelationshipSafetyRecord : inspects
+EnforceRelationshipSafetyPolicy --> EnforceRelationshipSafetyDecision : produces
+EnforceRelationshipSafetyRecord ..> EnforceRelationshipSafetyDecision : applies accepted
+EnforceRelationshipSafetyProjector ..> EnforceRelationshipSafetyDecision : consumes committed
+@enduml

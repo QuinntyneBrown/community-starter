@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Delegate Community authority
+
+class DelegateCommunityAuthorityRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class DelegateCommunityAuthorityDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class DelegateCommunityAuthorityRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: DelegateCommunityAuthorityDecision): void
+}
+
+interface IDelegateCommunityAuthorityRepository {
+  +Load(subjectId: string): Task<DelegateCommunityAuthorityRecord>
+  +Commit(record: DelegateCommunityAuthorityRecord, expectedVersion: long): Task<bool>
+}
+
+class DelegateCommunityAuthorityPolicy {
+  +Evaluate(record: DelegateCommunityAuthorityRecord, request: DelegateCommunityAuthorityRequest): DelegateCommunityAuthorityDecision
+  +ManageRolesAndPermissions(record: DelegateCommunityAuthorityRecord, request: DelegateCommunityAuthorityRequest): DelegateCommunityAuthorityDecision
+  +AssignARoleSafely(record: DelegateCommunityAuthorityRecord, request: DelegateCommunityAuthorityRequest): DelegateCommunityAuthorityDecision
+  +PreserveAdministrativeContinuity(record: DelegateCommunityAuthorityRecord, request: DelegateCommunityAuthorityRequest): DelegateCommunityAuthorityDecision
+}
+
+class DelegateCommunityAuthorityHandler {
+  +Handle(request: DelegateCommunityAuthorityRequest): Task<DelegateCommunityAuthorityDecision>
+}
+
+class DelegateCommunityAuthorityProjector {
+  +Project(decision: DelegateCommunityAuthorityDecision): Task<void>
+}
+
+DelegateCommunityAuthorityHandler ..> DelegateCommunityAuthorityRequest : handles
+DelegateCommunityAuthorityHandler ..> DelegateCommunityAuthorityPolicy : evaluates with
+DelegateCommunityAuthorityHandler --> IDelegateCommunityAuthorityRepository : loads / commits
+IDelegateCommunityAuthorityRepository --> DelegateCommunityAuthorityRecord : persists
+DelegateCommunityAuthorityPolicy ..> DelegateCommunityAuthorityRecord : inspects
+DelegateCommunityAuthorityPolicy --> DelegateCommunityAuthorityDecision : produces
+DelegateCommunityAuthorityRecord ..> DelegateCommunityAuthorityDecision : applies accepted
+DelegateCommunityAuthorityProjector ..> DelegateCommunityAuthorityDecision : consumes committed
+@enduml

@@ -1,0 +1,21 @@
+.moderation-form {
+  max-width: 48rem;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--cs-space-4);
+}
+
+.consequence {
+  padding: var(--cs-space-4);
+  border-radius: var(--cs-radius-md);
+  background: var(--cs-surface-subtle);
+}
+
+@media (max-width: 40rem) {
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,91 @@
+name: community-starter
+
+services:
+  postgres:
+    image: postgres:18.0-alpine
+    environment:
+      POSTGRES_DB: community_starter
+      POSTGRES_USER: community
+      POSTGRES_PASSWORD: ${COMMUNITY_DB_PASSWORD:-community-development-only}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U community -d community_starter"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-community-local}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-community-storage-development-only}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - object-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.27.8
+    environment:
+      MP_MAX_MESSAGES: 1000
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  clamav:
+    image: clamav/clamav:1.5.1
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav-data:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "printf 'PING\\n' | nc 127.0.0.1 3310 | grep PONG"]
+      interval: 15s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Community: Host=postgres;Port=5432;Database=community_starter;Username=community;Password=${COMMUNITY_DB_PASSWORD:-community-development-only}
+      Security__TokenPepper: ${COMMUNITY_TOKEN_PEPPER:-development-only-token-pepper-change-me-1234567890}
+      Migration__ApplyOnStartup: "true"
+      Runtime__Role: all
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4317
+      ASTRO_TELEMETRY_DISABLED: "1"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  object-data:
+  clamav-data:

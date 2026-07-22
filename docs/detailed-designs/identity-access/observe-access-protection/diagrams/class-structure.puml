@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Observable access protection
+
+class ObserveAccessProtectionRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ObserveAccessProtectionDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ObserveAccessProtectionRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ObserveAccessProtectionDecision): void
+}
+
+interface IObserveAccessProtectionRepository {
+  +Load(subjectId: string): Task<ObserveAccessProtectionRecord>
+  +Commit(record: ObserveAccessProtectionRecord, expectedVersion: long): Task<bool>
+}
+
+class ObserveAccessProtectionPolicy {
+  +Evaluate(record: ObserveAccessProtectionRecord, request: ObserveAccessProtectionRequest): ObserveAccessProtectionDecision
+  +LimitSensitiveAttempts(record: ObserveAccessProtectionRecord, request: ObserveAccessProtectionRequest): ObserveAccessProtectionDecision
+  +RecordSecurityEvents(record: ObserveAccessProtectionRecord, request: ObserveAccessProtectionRequest): ObserveAccessProtectionDecision
+}
+
+class ObserveAccessProtectionHandler {
+  +Handle(request: ObserveAccessProtectionRequest): Task<ObserveAccessProtectionDecision>
+}
+
+class ObserveAccessProtectionProjector {
+  +Project(decision: ObserveAccessProtectionDecision): Task<void>
+}
+
+ObserveAccessProtectionHandler ..> ObserveAccessProtectionRequest : handles
+ObserveAccessProtectionHandler ..> ObserveAccessProtectionPolicy : evaluates with
+ObserveAccessProtectionHandler --> IObserveAccessProtectionRepository : loads / commits
+IObserveAccessProtectionRepository --> ObserveAccessProtectionRecord : persists
+ObserveAccessProtectionPolicy ..> ObserveAccessProtectionRecord : inspects
+ObserveAccessProtectionPolicy --> ObserveAccessProtectionDecision : produces
+ObserveAccessProtectionRecord ..> ObserveAccessProtectionDecision : applies accepted
+ObserveAccessProtectionProjector ..> ObserveAccessProtectionDecision : consumes committed
+@enduml

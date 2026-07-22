@@ -1,0 +1,101 @@
+@import '../../design-system/tokens.css';
+@import '../../design-system/base.css';
+
+body {
+  min-width: 20rem;
+  min-height: 100svh;
+}
+
+.cs-field {
+  display: grid;
+  gap: var(--cs-space-2);
+}
+
+.cs-field label {
+  font-weight: 700;
+}
+
+.cs-field input,
+.cs-field select,
+.cs-field textarea {
+  width: 100%;
+  min-height: var(--cs-control-height);
+  padding: 0.7rem 0.8rem;
+  border: var(--cs-border-width) solid var(--cs-border-default);
+  border-radius: var(--cs-radius-md);
+  color: var(--cs-text-primary);
+  background: var(--cs-surface-card);
+}
+
+.cs-field [aria-invalid='true'] {
+  border-color: var(--cs-status-danger);
+}
+
+.cs-stack {
+  display: grid;
+  gap: var(--cs-space-4);
+}
+
+.cs-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cs-space-3);
+}
+
+.cs-page {
+  width: min(100% - 2rem, 72rem);
+  margin-inline: auto;
+  padding-block: var(--cs-space-7);
+}
+
+.cs-page__header {
+  max-width: var(--cs-content-reading);
+  margin-bottom: var(--cs-space-7);
+}
+
+.cs-page__header h1 {
+  font-size: var(--cs-step-3);
+}
+
+.cs-error {
+  padding: var(--cs-space-4);
+  border-inline-start: 0.3rem solid var(--cs-status-danger);
+  background: color-mix(in srgb, var(--cs-color-orange) 12%, white);
+}
+
+.cs-success {
+  padding: var(--cs-space-4);
+  border-inline-start: 0.3rem solid var(--cs-status-success);
+  background: color-mix(in srgb, var(--cs-color-accent) 20%, white);
+}
+
+.cs-muted {
+  color: var(--cs-text-muted);
+}
+
+.cs-form {
+  max-width: 36rem;
+}
+
+.cs-button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.cs-button--danger {
+  color: white;
+  background: var(--cs-status-danger);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

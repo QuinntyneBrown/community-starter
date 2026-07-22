@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Consent-based Conversation access
+
+class AuthorizeConversationAccessRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class AuthorizeConversationAccessDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class AuthorizeConversationAccessRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: AuthorizeConversationAccessDecision): void
+}
+
+interface IAuthorizeConversationAccessRepository {
+  +Load(subjectId: string): Task<AuthorizeConversationAccessRecord>
+  +Commit(record: AuthorizeConversationAccessRecord, expectedVersion: long): Task<bool>
+}
+
+class AuthorizeConversationAccessPolicy {
+  +Evaluate(record: AuthorizeConversationAccessRecord, request: AuthorizeConversationAccessRequest): AuthorizeConversationAccessDecision
+  +StartAnAuthorizedConversation(record: AuthorizeConversationAccessRecord, request: AuthorizeConversationAccessRequest): AuthorizeConversationAccessDecision
+  +EnforceMessageRequestAndBlockPolicy(record: AuthorizeConversationAccessRecord, request: AuthorizeConversationAccessRequest): AuthorizeConversationAccessDecision
+  +EndAndReEnterDirectConversationsDeterministically(record: AuthorizeConversationAccessRecord, request: AuthorizeConversationAccessRequest): AuthorizeConversationAccessDecision
+}
+
+class AuthorizeConversationAccessHandler {
+  +Handle(request: AuthorizeConversationAccessRequest): Task<AuthorizeConversationAccessDecision>
+}
+
+class AuthorizeConversationAccessProjector {
+  +Project(decision: AuthorizeConversationAccessDecision): Task<void>
+}
+
+AuthorizeConversationAccessHandler ..> AuthorizeConversationAccessRequest : handles
+AuthorizeConversationAccessHandler ..> AuthorizeConversationAccessPolicy : evaluates with
+AuthorizeConversationAccessHandler --> IAuthorizeConversationAccessRepository : loads / commits
+IAuthorizeConversationAccessRepository --> AuthorizeConversationAccessRecord : persists
+AuthorizeConversationAccessPolicy ..> AuthorizeConversationAccessRecord : inspects
+AuthorizeConversationAccessPolicy --> AuthorizeConversationAccessDecision : produces
+AuthorizeConversationAccessRecord ..> AuthorizeConversationAccessDecision : applies accepted
+AuthorizeConversationAccessProjector ..> AuthorizeConversationAccessDecision : consumes committed
+@enduml

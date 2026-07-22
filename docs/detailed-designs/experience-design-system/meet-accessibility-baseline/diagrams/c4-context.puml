@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Meet an inclusive accessibility baseline
+
+Person(actor, "Product Engineer", "Builds product surfaces from shared interaction contracts")
+System(system, "Community Experience System", "Design tokens, Angular components, content, and accessibility contracts")
+System_Ext(external, "Browser and Assistive Technology Matrix", "Supported rendering and interaction environments")
+
+Rel(actor, system, "Uses for meet an inclusive accessibility baseline", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

@@ -1,0 +1,23 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components — Repository knowledge stays current and actionable
+
+Container(frontend, "Developer Workspace", "CLI and editor tasks", "Presents state and sends typed intent")
+Container_Boundary(backend, "Starter Tooling Runtime") {
+  Component(endpoint, "MaintainRepositoryKnowledgeEndpoint", "tooling command entry point", "Authenticates and dispatches feature requests")
+  Component(handler, "MaintainRepositoryKnowledgeHandler", "Application service", "Coordinates authorized state and one unit of work")
+  Component(policy, "MaintainRepositoryKnowledgePolicy", "Domain policy", "Evaluates traced behavior against current state")
+  Component(repository, "IMaintainRepositoryKnowledgeRepository", "Persistence port", "Loads scoped state and commits conditionally")
+  Component(projector, "MaintainRepositoryKnowledgeProjector", "Post-commit component", "Processes committed outcomes idempotently")
+  ComponentDb(store, "Starter Metadata Store", "Versioned files", "Stores state, versions, outcomes, and checkpoints")
+}
+
+Rel(frontend, endpoint, "Submits MaintainRepositoryKnowledgeRequest", "Typed contract")
+Rel(endpoint, handler, "Dispatches request")
+Rel(handler, policy, "Evaluates current state")
+Rel(handler, repository, "Loads and commits")
+Rel(repository, store, "Reads and writes", "Transactional adapter")
+Rel(handler, projector, "Publishes committed outcome", "Durable handoff")
+Rel(projector, store, "Checkpoints processing", "Idempotent adapter")
+@enduml

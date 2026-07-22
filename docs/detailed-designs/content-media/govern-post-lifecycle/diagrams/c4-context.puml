@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Govern Post lifecycle
+
+Person(actor, "Community Member", "Publishes and discusses Community content")
+System(system, "Community Platform", "Community participation, administration, and safety system")
+System_Ext(external, "Media Storage and Scan Providers", "Stores quarantined media and reports content safety results")
+
+Rel(actor, system, "Uses for govern Post lifecycle", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

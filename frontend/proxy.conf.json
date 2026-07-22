@@ -1,0 +1,15 @@
+{
+  "/api": {
+    "target": "https://localhost:7268",
+    "secure": false
+  },
+  "/health": {
+    "target": "https://localhost:7268",
+    "secure": false
+  },
+  "/hubs": {
+    "target": "https://localhost:7268",
+    "secure": false,
+    "ws": true
+  }
+}

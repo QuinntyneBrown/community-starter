@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Keep discovery trustworthy
+
+Person(actor, "Community Member", "Discovers authorized content and records engagement")
+System(system, "Community Platform", "Community participation, administration, and safety system")
+System_Ext(external, "Search Infrastructure", "Indexes eligible records after authoritative commits")
+
+Rel(actor, system, "Uses for keep discovery trustworthy", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

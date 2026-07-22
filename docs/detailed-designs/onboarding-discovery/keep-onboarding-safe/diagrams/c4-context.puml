@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Keep onboarding safe and inclusive
+
+Person(actor, "New Account Holder", "Completes onboarding and reaches a first Community")
+System(system, "Community Platform", "Community participation, administration, and safety system")
+System_Ext(external, "Notification Delivery", "Delivers eligible invitation and onboarding actions")
+
+Rel(actor, system, "Uses for keep onboarding safe and inclusive", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

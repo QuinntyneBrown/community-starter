@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Model threats and enforce identity in Community context
+
+Person(actor, "Security Engineer", "Reviews security boundaries and production evidence")
+System(system, "Community Platform Security", "Security policy, enforcement, evidence, and readiness system")
+System_Ext(external, "Identity, Secret, and Scan Providers", "Protected identity, key, and vulnerability services")
+
+Rel(actor, system, "Uses for model threats and enforce identity in Community context", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Telemetry and providers respect privacy boundaries
+
+class EnforceProviderPrivacyRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class EnforceProviderPrivacyDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class EnforceProviderPrivacyRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: EnforceProviderPrivacyDecision): void
+}
+
+interface IEnforceProviderPrivacyRepository {
+  +Load(subjectId: string): Task<EnforceProviderPrivacyRecord>
+  +Commit(record: EnforceProviderPrivacyRecord, expectedVersion: long): Task<bool>
+}
+
+class EnforceProviderPrivacyPolicy {
+  +Evaluate(record: EnforceProviderPrivacyRecord, request: EnforceProviderPrivacyRequest): EnforceProviderPrivacyDecision
+  +KeepTelemetryFreeOfSensitiveContent(record: EnforceProviderPrivacyRecord, request: EnforceProviderPrivacyRequest): EnforceProviderPrivacyDecision
+  +GovernProductAnalyticsAndConsent(record: EnforceProviderPrivacyRecord, request: EnforceProviderPrivacyRequest): EnforceProviderPrivacyDecision
+  +ControlProcessorAndRegionalDataBoundaries(record: EnforceProviderPrivacyRecord, request: EnforceProviderPrivacyRequest): EnforceProviderPrivacyDecision
+}
+
+class EnforceProviderPrivacyHandler {
+  +Handle(request: EnforceProviderPrivacyRequest): Task<EnforceProviderPrivacyDecision>
+}
+
+class EnforceProviderPrivacyProjector {
+  +Project(decision: EnforceProviderPrivacyDecision): Task<void>
+}
+
+EnforceProviderPrivacyHandler ..> EnforceProviderPrivacyRequest : handles
+EnforceProviderPrivacyHandler ..> EnforceProviderPrivacyPolicy : evaluates with
+EnforceProviderPrivacyHandler --> IEnforceProviderPrivacyRepository : loads / commits
+IEnforceProviderPrivacyRepository --> EnforceProviderPrivacyRecord : persists
+EnforceProviderPrivacyPolicy ..> EnforceProviderPrivacyRecord : inspects
+EnforceProviderPrivacyPolicy --> EnforceProviderPrivacyDecision : produces
+EnforceProviderPrivacyRecord ..> EnforceProviderPrivacyDecision : applies accepted
+EnforceProviderPrivacyProjector ..> EnforceProviderPrivacyDecision : consumes committed
+@enduml

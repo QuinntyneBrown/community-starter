@@ -1,0 +1,31 @@
+<section class="auth-page cs-page">
+  <div class="auth-page__intro">
+    <p class="cs-eyebrow">Account ownership</p>
+    <h1>Confirm your email.</h1>
+  </div>
+  @if (isComplete()) {
+    <div class="cs-card cs-stack" aria-live="polite">
+      <h2>Your account is verified</h2>
+      <p>You can now sign in and join a community.</p>
+      <a class="cs-button" routerLink="/sign-in">Continue to sign in</a>
+    </div>
+  } @else {
+    <form class="cs-card cs-form cs-stack" [formGroup]="form" (ngSubmit)="submit()">
+      @if (problem()) {
+        <div class="cs-error" role="alert">{{ problem()?.title }}</div>
+      }
+      <div class="cs-field">
+        <label for="verification-token">Verification token</label>
+        <input
+          id="verification-token"
+          type="text"
+          autocomplete="one-time-code"
+          formControlName="token"
+        />
+      </div>
+      <button class="cs-button" type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Verifying…' : 'Verify account' }}
+      </button>
+    </form>
+  }
+</section>

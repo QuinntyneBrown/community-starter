@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Durable external Delivery
+
+Person(actor, "Account Holder", "Receives and controls eligible Notifications")
+System(system, "Community Platform", "Community participation, administration, and safety system")
+System_Ext(external, "Email Delivery Provider", "Attempts privacy-safe external email Delivery")
+
+Rel(actor, system, "Uses for durable external Delivery", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

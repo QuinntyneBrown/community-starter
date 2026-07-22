@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Provide disciplined Angular component contracts
+
+class ProvideAngularComponentContractsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ProvideAngularComponentContractsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ProvideAngularComponentContractsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ProvideAngularComponentContractsDecision): void
+}
+
+interface IProvideAngularComponentContractsRepository {
+  +Load(subjectId: string): Task<ProvideAngularComponentContractsRecord>
+  +Commit(record: ProvideAngularComponentContractsRecord, expectedVersion: long): Task<bool>
+}
+
+class ProvideAngularComponentContractsPolicy {
+  +Evaluate(record: ProvideAngularComponentContractsRecord, request: ProvideAngularComponentContractsRequest): ProvideAngularComponentContractsDecision
+  +AngularSourceIsStrictFocusedAndAdjacent(record: ProvideAngularComponentContractsRecord, request: ProvideAngularComponentContractsRequest): ProvideAngularComponentContractsDecision
+  +PresentationalComponentsReceiveDataAndEmitIntent(record: ProvideAngularComponentContractsRecord, request: ProvideAngularComponentContractsRequest): ProvideAngularComponentContractsDecision
+  +RemoteAndDerivedStateRemainExplicit(record: ProvideAngularComponentContractsRecord, request: ProvideAngularComponentContractsRequest): ProvideAngularComponentContractsDecision
+}
+
+class ProvideAngularComponentContractsHandler {
+  +Handle(request: ProvideAngularComponentContractsRequest): Task<ProvideAngularComponentContractsDecision>
+}
+
+class ProvideAngularComponentContractsProjector {
+  +Project(decision: ProvideAngularComponentContractsDecision): Task<void>
+}
+
+ProvideAngularComponentContractsHandler ..> ProvideAngularComponentContractsRequest : handles
+ProvideAngularComponentContractsHandler ..> ProvideAngularComponentContractsPolicy : evaluates with
+ProvideAngularComponentContractsHandler --> IProvideAngularComponentContractsRepository : loads / commits
+IProvideAngularComponentContractsRepository --> ProvideAngularComponentContractsRecord : persists
+ProvideAngularComponentContractsPolicy ..> ProvideAngularComponentContractsRecord : inspects
+ProvideAngularComponentContractsPolicy --> ProvideAngularComponentContractsDecision : produces
+ProvideAngularComponentContractsRecord ..> ProvideAngularComponentContractsDecision : applies accepted
+ProvideAngularComponentContractsProjector ..> ProvideAngularComponentContractsDecision : consumes committed
+@enduml

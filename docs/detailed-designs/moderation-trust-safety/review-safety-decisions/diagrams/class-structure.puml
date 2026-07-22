@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Reviewable and operable safety decisions
+
+class ReviewSafetyDecisionsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ReviewSafetyDecisionsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ReviewSafetyDecisionsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ReviewSafetyDecisionsDecision): void
+}
+
+interface IReviewSafetyDecisionsRepository {
+  +Load(subjectId: string): Task<ReviewSafetyDecisionsRecord>
+  +Commit(record: ReviewSafetyDecisionsRecord, expectedVersion: long): Task<bool>
+}
+
+class ReviewSafetyDecisionsPolicy {
+  +Evaluate(record: ReviewSafetyDecisionsRecord, request: ReviewSafetyDecisionsRequest): ReviewSafetyDecisionsDecision
+  +AdjudicateEligibleAppealsAndRepairState(record: ReviewSafetyDecisionsRecord, request: ReviewSafetyDecisionsRequest): ReviewSafetyDecisionsDecision
+  +AuditAndMeasureSafetyOutcomes(record: ReviewSafetyDecisionsRecord, request: ReviewSafetyDecisionsRequest): ReviewSafetyDecisionsDecision
+}
+
+class ReviewSafetyDecisionsHandler {
+  +Handle(request: ReviewSafetyDecisionsRequest): Task<ReviewSafetyDecisionsDecision>
+}
+
+class ReviewSafetyDecisionsProjector {
+  +Project(decision: ReviewSafetyDecisionsDecision): Task<void>
+}
+
+ReviewSafetyDecisionsHandler ..> ReviewSafetyDecisionsRequest : handles
+ReviewSafetyDecisionsHandler ..> ReviewSafetyDecisionsPolicy : evaluates with
+ReviewSafetyDecisionsHandler --> IReviewSafetyDecisionsRepository : loads / commits
+IReviewSafetyDecisionsRepository --> ReviewSafetyDecisionsRecord : persists
+ReviewSafetyDecisionsPolicy ..> ReviewSafetyDecisionsRecord : inspects
+ReviewSafetyDecisionsPolicy --> ReviewSafetyDecisionsDecision : produces
+ReviewSafetyDecisionsRecord ..> ReviewSafetyDecisionsDecision : applies accepted
+ReviewSafetyDecisionsProjector ..> ReviewSafetyDecisionsDecision : consumes committed
+@enduml

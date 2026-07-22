@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — A clean checkout is reproducible
+
+class ReproduceCleanCheckoutRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ReproduceCleanCheckoutDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ReproduceCleanCheckoutRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ReproduceCleanCheckoutDecision): void
+}
+
+interface IReproduceCleanCheckoutRepository {
+  +Load(subjectId: string): Task<ReproduceCleanCheckoutRecord>
+  +Commit(record: ReproduceCleanCheckoutRecord, expectedVersion: long): Task<bool>
+}
+
+class ReproduceCleanCheckoutPolicy {
+  +Evaluate(record: ReproduceCleanCheckoutRecord, request: ReproduceCleanCheckoutRequest): ReproduceCleanCheckoutDecision
+  +PinAndValidateDevelopmentToolchains(record: ReproduceCleanCheckoutRecord, request: ReproduceCleanCheckoutRequest): ReproduceCleanCheckoutDecision
+  +ExposeCanonicalRepositoryCommands(record: ReproduceCleanCheckoutRecord, request: ReproduceCleanCheckoutRequest): ReproduceCleanCheckoutDecision
+  +ProvisionRepeatableLocalDependencies(record: ReproduceCleanCheckoutRecord, request: ReproduceCleanCheckoutRequest): ReproduceCleanCheckoutDecision
+  +ValidateEnvironmentConfigurationAndSecrets(record: ReproduceCleanCheckoutRecord, request: ReproduceCleanCheckoutRequest): ReproduceCleanCheckoutDecision
+}
+
+class ReproduceCleanCheckoutHandler {
+  +Handle(request: ReproduceCleanCheckoutRequest): Task<ReproduceCleanCheckoutDecision>
+}
+
+class ReproduceCleanCheckoutProjector {
+  +Project(decision: ReproduceCleanCheckoutDecision): Task<void>
+}
+
+ReproduceCleanCheckoutHandler ..> ReproduceCleanCheckoutRequest : handles
+ReproduceCleanCheckoutHandler ..> ReproduceCleanCheckoutPolicy : evaluates with
+ReproduceCleanCheckoutHandler --> IReproduceCleanCheckoutRepository : loads / commits
+IReproduceCleanCheckoutRepository --> ReproduceCleanCheckoutRecord : persists
+ReproduceCleanCheckoutPolicy ..> ReproduceCleanCheckoutRecord : inspects
+ReproduceCleanCheckoutPolicy --> ReproduceCleanCheckoutDecision : produces
+ReproduceCleanCheckoutRecord ..> ReproduceCleanCheckoutDecision : applies accepted
+ReproduceCleanCheckoutProjector ..> ReproduceCleanCheckoutDecision : consumes committed
+@enduml

@@ -1,0 +1,126 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--cs-font-body);
+  color: var(--cs-text-primary);
+  background: var(--cs-surface-page);
+  line-height: 1.55;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.18em;
+}
+
+:focus-visible {
+  outline: 0.18rem solid var(--cs-focus-ring);
+  outline-offset: 0.18rem;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-block-start: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--cs-font-heading);
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.cs-shell {
+  width: min(100% - 2rem, var(--cs-content-wide));
+  margin-inline: auto;
+}
+
+.cs-button {
+  min-height: var(--cs-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cs-space-2);
+  padding: 0.7rem 1.1rem;
+  border: var(--cs-border-width) solid var(--cs-text-primary);
+  border-radius: var(--cs-radius-round);
+  background: var(--cs-action-primary);
+  color: var(--cs-text-primary);
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background var(--cs-motion-fast) var(--cs-ease-standard),
+    transform var(--cs-motion-fast) var(--cs-ease-standard);
+}
+
+.cs-button:hover {
+  background: var(--cs-action-primary-hover);
+}
+
+.cs-button:active {
+  transform: translateY(0.08rem);
+}
+
+.cs-button--secondary {
+  background: transparent;
+}
+
+.cs-card {
+  padding: var(--cs-space-5);
+  border: var(--cs-border-width) solid var(--cs-border-default);
+  border-radius: var(--cs-radius-lg);
+  background: var(--cs-surface-card);
+  box-shadow: var(--cs-shadow-card);
+}
+
+.cs-eyebrow {
+  font-size: var(--cs-step--1);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cs-skip-link {
+  position: fixed;
+  inset: var(--cs-space-2) auto auto var(--cs-space-2);
+  z-index: var(--cs-z-dialog);
+  transform: translateY(-200%);
+  background: var(--cs-color-accent);
+  padding: var(--cs-space-3) var(--cs-space-4);
+}
+
+.cs-skip-link:focus {
+  transform: none;
+}
+
+@media (forced-colors: active) {
+  .cs-button,
+  .cs-card {
+    border-color: CanvasText;
+  }
+}

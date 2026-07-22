@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Privacy-safe actionable insights
+
+class DeliverPrivacySafeInsightsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class DeliverPrivacySafeInsightsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class DeliverPrivacySafeInsightsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: DeliverPrivacySafeInsightsDecision): void
+}
+
+interface IDeliverPrivacySafeInsightsRepository {
+  +Load(subjectId: string): Task<DeliverPrivacySafeInsightsRecord>
+  +Commit(record: DeliverPrivacySafeInsightsRecord, expectedVersion: long): Task<bool>
+}
+
+class DeliverPrivacySafeInsightsPolicy {
+  +Evaluate(record: DeliverPrivacySafeInsightsRecord, request: DeliverPrivacySafeInsightsRequest): DeliverPrivacySafeInsightsDecision
+  +PublishGovernedMetricDefinitions(record: DeliverPrivacySafeInsightsRecord, request: DeliverPrivacySafeInsightsRequest): DeliverPrivacySafeInsightsDecision
+  +EnforceInsightScopeAndPrivacy(record: DeliverPrivacySafeInsightsRecord, request: DeliverPrivacySafeInsightsRequest): DeliverPrivacySafeInsightsDecision
+}
+
+class DeliverPrivacySafeInsightsHandler {
+  +Handle(request: DeliverPrivacySafeInsightsRequest): Task<DeliverPrivacySafeInsightsDecision>
+}
+
+class DeliverPrivacySafeInsightsProjector {
+  +Project(decision: DeliverPrivacySafeInsightsDecision): Task<void>
+}
+
+DeliverPrivacySafeInsightsHandler ..> DeliverPrivacySafeInsightsRequest : handles
+DeliverPrivacySafeInsightsHandler ..> DeliverPrivacySafeInsightsPolicy : evaluates with
+DeliverPrivacySafeInsightsHandler --> IDeliverPrivacySafeInsightsRepository : loads / commits
+IDeliverPrivacySafeInsightsRepository --> DeliverPrivacySafeInsightsRecord : persists
+DeliverPrivacySafeInsightsPolicy ..> DeliverPrivacySafeInsightsRecord : inspects
+DeliverPrivacySafeInsightsPolicy --> DeliverPrivacySafeInsightsDecision : produces
+DeliverPrivacySafeInsightsRecord ..> DeliverPrivacySafeInsightsDecision : applies accepted
+DeliverPrivacySafeInsightsProjector ..> DeliverPrivacySafeInsightsDecision : consumes committed
+@enduml

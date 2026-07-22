@@ -1,0 +1,65 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — People can access and control their data
+
+class ControlPersonalDataRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ControlPersonalDataDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ControlPersonalDataRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ControlPersonalDataDecision): void
+}
+
+interface IControlPersonalDataRepository {
+  +Load(subjectId: string): Task<ControlPersonalDataRecord>
+  +Commit(record: ControlPersonalDataRecord, expectedVersion: long): Task<bool>
+}
+
+class ControlPersonalDataPolicy {
+  +Evaluate(record: ControlPersonalDataRecord, request: ControlPersonalDataRequest): ControlPersonalDataDecision
+  +CorrectControllablePersonalData(record: ControlPersonalDataRecord, request: ControlPersonalDataRequest): ControlPersonalDataDecision
+  +ExportPersonalDataSecurely(record: ControlPersonalDataRecord, request: ControlPersonalDataRequest): ControlPersonalDataDecision
+  +DeactivateAndRestoreAnAccount(record: ControlPersonalDataRecord, request: ControlPersonalDataRequest): ControlPersonalDataDecision
+  +CompleteAnAccountDeletionRequest(record: ControlPersonalDataRecord, request: ControlPersonalDataRequest): ControlPersonalDataDecision
+  +ResolveDependentResponsibilitiesBeforeAccountExit(record: ControlPersonalDataRecord, request: ControlPersonalDataRequest): ControlPersonalDataDecision
+}
+
+class ControlPersonalDataHandler {
+  +Handle(request: ControlPersonalDataRequest): Task<ControlPersonalDataDecision>
+}
+
+class ControlPersonalDataProjector {
+  +Project(decision: ControlPersonalDataDecision): Task<void>
+}
+
+ControlPersonalDataHandler ..> ControlPersonalDataRequest : handles
+ControlPersonalDataHandler ..> ControlPersonalDataPolicy : evaluates with
+ControlPersonalDataHandler --> IControlPersonalDataRepository : loads / commits
+IControlPersonalDataRepository --> ControlPersonalDataRecord : persists
+ControlPersonalDataPolicy ..> ControlPersonalDataRecord : inspects
+ControlPersonalDataPolicy --> ControlPersonalDataDecision : produces
+ControlPersonalDataRecord ..> ControlPersonalDataDecision : applies accepted
+ControlPersonalDataProjector ..> ControlPersonalDataDecision : consumes committed
+@enduml

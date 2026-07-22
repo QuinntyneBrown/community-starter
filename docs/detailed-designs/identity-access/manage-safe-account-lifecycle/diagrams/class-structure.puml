@@ -1,0 +1,65 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Safe Account lifecycle
+
+class ManageSafeAccountLifecycleRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ManageSafeAccountLifecycleDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ManageSafeAccountLifecycleRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ManageSafeAccountLifecycleDecision): void
+}
+
+interface IManageSafeAccountLifecycleRepository {
+  +Load(subjectId: string): Task<ManageSafeAccountLifecycleRecord>
+  +Commit(record: ManageSafeAccountLifecycleRecord, expectedVersion: long): Task<bool>
+}
+
+class ManageSafeAccountLifecyclePolicy {
+  +Evaluate(record: ManageSafeAccountLifecycleRecord, request: ManageSafeAccountLifecycleRequest): ManageSafeAccountLifecycleDecision
+  +RegisterAnAccountSafely(record: ManageSafeAccountLifecycleRecord, request: ManageSafeAccountLifecycleRequest): ManageSafeAccountLifecycleDecision
+  +VerifyAccountOwnership(record: ManageSafeAccountLifecycleRecord, request: ManageSafeAccountLifecycleRequest): ManageSafeAccountLifecycleDecision
+  +RecoverAccountAccess(record: ManageSafeAccountLifecycleRecord, request: ManageSafeAccountLifecycleRequest): ManageSafeAccountLifecycleDecision
+  +EnterAccountDeactivationSafely(record: ManageSafeAccountLifecycleRecord, request: ManageSafeAccountLifecycleRequest): ManageSafeAccountLifecycleDecision
+  +ProtectLocalCredentialsAndActionSecrets(record: ManageSafeAccountLifecycleRecord, request: ManageSafeAccountLifecycleRequest): ManageSafeAccountLifecycleDecision
+}
+
+class ManageSafeAccountLifecycleHandler {
+  +Handle(request: ManageSafeAccountLifecycleRequest): Task<ManageSafeAccountLifecycleDecision>
+}
+
+class ManageSafeAccountLifecycleProjector {
+  +Project(decision: ManageSafeAccountLifecycleDecision): Task<void>
+}
+
+ManageSafeAccountLifecycleHandler ..> ManageSafeAccountLifecycleRequest : handles
+ManageSafeAccountLifecycleHandler ..> ManageSafeAccountLifecyclePolicy : evaluates with
+ManageSafeAccountLifecycleHandler --> IManageSafeAccountLifecycleRepository : loads / commits
+IManageSafeAccountLifecycleRepository --> ManageSafeAccountLifecycleRecord : persists
+ManageSafeAccountLifecyclePolicy ..> ManageSafeAccountLifecycleRecord : inspects
+ManageSafeAccountLifecyclePolicy --> ManageSafeAccountLifecycleDecision : produces
+ManageSafeAccountLifecycleRecord ..> ManageSafeAccountLifecycleDecision : applies accepted
+ManageSafeAccountLifecycleProjector ..> ManageSafeAccountLifecycleDecision : consumes committed
+@enduml

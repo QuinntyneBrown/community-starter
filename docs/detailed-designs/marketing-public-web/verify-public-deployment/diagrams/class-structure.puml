@@ -1,0 +1,61 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Evolve and verify public deployment safely
+
+class VerifyPublicDeploymentRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class VerifyPublicDeploymentDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class VerifyPublicDeploymentRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: VerifyPublicDeploymentDecision): void
+}
+
+interface IVerifyPublicDeploymentRepository {
+  +Load(subjectId: string): Task<VerifyPublicDeploymentRecord>
+  +Commit(record: VerifyPublicDeploymentRecord, expectedVersion: long): Task<bool>
+}
+
+class VerifyPublicDeploymentPolicy {
+  +Evaluate(record: VerifyPublicDeploymentRecord, request: VerifyPublicDeploymentRequest): VerifyPublicDeploymentDecision
+  +PublishedPublicBehaviorIsReleaseBlockingEvidence(record: VerifyPublicDeploymentRecord, request: VerifyPublicDeploymentRequest): VerifyPublicDeploymentDecision
+}
+
+class VerifyPublicDeploymentHandler {
+  +Handle(request: VerifyPublicDeploymentRequest): Task<VerifyPublicDeploymentDecision>
+}
+
+class VerifyPublicDeploymentProjector {
+  +Project(decision: VerifyPublicDeploymentDecision): Task<void>
+}
+
+VerifyPublicDeploymentHandler ..> VerifyPublicDeploymentRequest : handles
+VerifyPublicDeploymentHandler ..> VerifyPublicDeploymentPolicy : evaluates with
+VerifyPublicDeploymentHandler --> IVerifyPublicDeploymentRepository : loads / commits
+IVerifyPublicDeploymentRepository --> VerifyPublicDeploymentRecord : persists
+VerifyPublicDeploymentPolicy ..> VerifyPublicDeploymentRecord : inspects
+VerifyPublicDeploymentPolicy --> VerifyPublicDeploymentDecision : produces
+VerifyPublicDeploymentRecord ..> VerifyPublicDeploymentDecision : applies accepted
+VerifyPublicDeploymentProjector ..> VerifyPublicDeploymentDecision : consumes committed
+@enduml

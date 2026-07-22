@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Coordinated and safe participation
+
+class CoordinateSafeParticipationRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class CoordinateSafeParticipationDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class CoordinateSafeParticipationRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: CoordinateSafeParticipationDecision): void
+}
+
+interface ICoordinateSafeParticipationRepository {
+  +Load(subjectId: string): Task<CoordinateSafeParticipationRecord>
+  +Commit(record: CoordinateSafeParticipationRecord, expectedVersion: long): Task<bool>
+}
+
+class CoordinateSafeParticipationPolicy {
+  +Evaluate(record: CoordinateSafeParticipationRecord, request: CoordinateSafeParticipationRequest): CoordinateSafeParticipationDecision
+  +NotifyEligibleAttendeesOfChanges(record: CoordinateSafeParticipationRecord, request: CoordinateSafeParticipationRequest): CoordinateSafeParticipationDecision
+  +ReportAndModerateEventHarm(record: CoordinateSafeParticipationRecord, request: CoordinateSafeParticipationRequest): CoordinateSafeParticipationDecision
+}
+
+class CoordinateSafeParticipationHandler {
+  +Handle(request: CoordinateSafeParticipationRequest): Task<CoordinateSafeParticipationDecision>
+}
+
+class CoordinateSafeParticipationProjector {
+  +Project(decision: CoordinateSafeParticipationDecision): Task<void>
+}
+
+CoordinateSafeParticipationHandler ..> CoordinateSafeParticipationRequest : handles
+CoordinateSafeParticipationHandler ..> CoordinateSafeParticipationPolicy : evaluates with
+CoordinateSafeParticipationHandler --> ICoordinateSafeParticipationRepository : loads / commits
+ICoordinateSafeParticipationRepository --> CoordinateSafeParticipationRecord : persists
+CoordinateSafeParticipationPolicy ..> CoordinateSafeParticipationRecord : inspects
+CoordinateSafeParticipationPolicy --> CoordinateSafeParticipationDecision : produces
+CoordinateSafeParticipationRecord ..> CoordinateSafeParticipationDecision : applies accepted
+CoordinateSafeParticipationProjector ..> CoordinateSafeParticipationDecision : consumes committed
+@enduml

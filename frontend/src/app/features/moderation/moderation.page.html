@@ -1,0 +1,59 @@
+<section class="cs-page">
+  <header class="cs-page__header">
+    <p class="cs-eyebrow">Trust and safety</p>
+    <h1>Review harm with context and restraint.</h1>
+    <p>
+      Only current moderators can apply a versioned action. Every outcome is audited and reconciled
+      after commit.
+    </p>
+  </header>
+  <form class="moderation-form cs-card cs-stack" [formGroup]="form" (ngSubmit)="submit()">
+    @if (problem()) {
+      <div class="cs-error" role="alert">{{ problem()?.title }}</div>
+    }
+    @if (result()) {
+      <div class="cs-success" role="status">
+        Action {{ result()?.actionId }} committed. Post version {{ result()?.postVersion }}.
+      </div>
+    }
+    <div class="field-grid">
+      <div class="cs-field">
+        <label for="case-id">Case ID</label><input id="case-id" formControlName="caseId" />
+      </div>
+      <div class="cs-field">
+        <label for="post-id">Post ID</label><input id="post-id" formControlName="postId" />
+      </div>
+      <div class="cs-field">
+        <label for="case-version">Case version</label
+        ><input id="case-version" type="number" min="0" formControlName="expectedCaseVersion" />
+      </div>
+      <div class="cs-field">
+        <label for="post-version">Post version</label
+        ><input id="post-version" type="number" min="0" formControlName="expectedPostVersion" />
+      </div>
+    </div>
+    <div class="cs-field">
+      <label for="action-kind">Action</label>
+      <select id="action-kind" formControlName="kind">
+        <option value="hide-post">Hide post</option>
+      </select>
+    </div>
+    <div class="cs-field">
+      <label for="rationale">Rationale</label
+      ><textarea id="rationale" rows="6" formControlName="rationale"></textarea>
+    </div>
+    <div class="consequence">
+      <strong>Consequence preview</strong>
+      <p>
+        The Post leaves direct reads and Feed projections. A durable reconciliation job repairs
+        derived views.
+      </p>
+    </div>
+    <div class="cs-cluster">
+      <button class="cs-button cs-button--danger" type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Applying action…' : 'Apply moderation action' }}
+      </button>
+      <a routerLink="/home">Return to Feed</a>
+    </div>
+  </form>
+</section>

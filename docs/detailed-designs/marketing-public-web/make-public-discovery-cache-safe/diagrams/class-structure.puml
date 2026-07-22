@@ -1,0 +1,65 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Make public discovery fast, private, and cache-safe
+
+class MakePublicDiscoveryCacheSafeRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class MakePublicDiscoveryCacheSafeDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class MakePublicDiscoveryCacheSafeRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: MakePublicDiscoveryCacheSafeDecision): void
+}
+
+interface IMakePublicDiscoveryCacheSafeRepository {
+  +Load(subjectId: string): Task<MakePublicDiscoveryCacheSafeRecord>
+  +Commit(record: MakePublicDiscoveryCacheSafeRecord, expectedVersion: long): Task<bool>
+}
+
+class MakePublicDiscoveryCacheSafePolicy {
+  +Evaluate(record: MakePublicDiscoveryCacheSafeRecord, request: MakePublicDiscoveryCacheSafeRequest): MakePublicDiscoveryCacheSafeDecision
+  +PublicMetadataAndIndexingAreDeliberate(record: MakePublicDiscoveryCacheSafeRecord, request: MakePublicDiscoveryCacheSafeRequest): MakePublicDiscoveryCacheSafeDecision
+  +PublicPerformanceHasAnExplicitBudget(record: MakePublicDiscoveryCacheSafeRecord, request: MakePublicDiscoveryCacheSafeRequest): MakePublicDiscoveryCacheSafeDecision
+  +AnalyticsEmbedsAndAuthenticatedDataRemainPrivateByDesign(record: MakePublicDiscoveryCacheSafeRecord, request: MakePublicDiscoveryCacheSafeRequest): MakePublicDiscoveryCacheSafeDecision
+  +CachePolicyDistinguishesImmutableAndRevalidatedContent(record: MakePublicDiscoveryCacheSafeRecord, request: MakePublicDiscoveryCacheSafeRequest): MakePublicDiscoveryCacheSafeDecision
+  +PublishIndexableCommunitiesSafely(record: MakePublicDiscoveryCacheSafeRecord, request: MakePublicDiscoveryCacheSafeRequest): MakePublicDiscoveryCacheSafeDecision
+}
+
+class MakePublicDiscoveryCacheSafeHandler {
+  +Handle(request: MakePublicDiscoveryCacheSafeRequest): Task<MakePublicDiscoveryCacheSafeDecision>
+}
+
+class MakePublicDiscoveryCacheSafeProjector {
+  +Project(decision: MakePublicDiscoveryCacheSafeDecision): Task<void>
+}
+
+MakePublicDiscoveryCacheSafeHandler ..> MakePublicDiscoveryCacheSafeRequest : handles
+MakePublicDiscoveryCacheSafeHandler ..> MakePublicDiscoveryCacheSafePolicy : evaluates with
+MakePublicDiscoveryCacheSafeHandler --> IMakePublicDiscoveryCacheSafeRepository : loads / commits
+IMakePublicDiscoveryCacheSafeRepository --> MakePublicDiscoveryCacheSafeRecord : persists
+MakePublicDiscoveryCacheSafePolicy ..> MakePublicDiscoveryCacheSafeRecord : inspects
+MakePublicDiscoveryCacheSafePolicy --> MakePublicDiscoveryCacheSafeDecision : produces
+MakePublicDiscoveryCacheSafeRecord ..> MakePublicDiscoveryCacheSafeDecision : applies accepted
+MakePublicDiscoveryCacheSafeProjector ..> MakePublicDiscoveryCacheSafeDecision : consumes committed
+@enduml

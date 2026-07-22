@@ -1,0 +1,25 @@
+# Build outputs
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/.angular/
+**/.astro/
+**/coverage/
+TestResults/
+artifacts/
+
+# Local environment and tools
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+*.user
+*.suo
+*.local
+
+# Operating systems
+.DS_Store
+Thumbs.db
+

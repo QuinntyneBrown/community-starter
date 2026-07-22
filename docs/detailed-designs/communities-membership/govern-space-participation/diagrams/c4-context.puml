@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Govern Spaces and participation rules
+
+Person(actor, "Community Member", "Creates, joins, and participates in Communities")
+System(system, "Community Platform", "Community participation, administration, and safety system")
+System_Ext(external, "Delivery and Storage Providers", "Purpose-bound email, media, and infrastructure services")
+
+Rel(actor, system, "Uses for govern Spaces and participation rules", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Reach first Community value
+
+class ReachFirstCommunityValueRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ReachFirstCommunityValueDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ReachFirstCommunityValueRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ReachFirstCommunityValueDecision): void
+}
+
+interface IReachFirstCommunityValueRepository {
+  +Load(subjectId: string): Task<ReachFirstCommunityValueRecord>
+  +Commit(record: ReachFirstCommunityValueRecord, expectedVersion: long): Task<bool>
+}
+
+class ReachFirstCommunityValuePolicy {
+  +Evaluate(record: ReachFirstCommunityValueRecord, request: ReachFirstCommunityValueRequest): ReachFirstCommunityValueDecision
+  +PreviewACommunitySafely(record: ReachFirstCommunityValueRecord, request: ReachFirstCommunityValueRequest): ReachFirstCommunityValueDecision
+  +EnterTheMembershipPath(record: ReachFirstCommunityValueRecord, request: ReachFirstCommunityValueRequest): ReachFirstCommunityValueDecision
+  +EstablishTheFirstFeed(record: ReachFirstCommunityValueRecord, request: ReachFirstCommunityValueRequest): ReachFirstCommunityValueDecision
+}
+
+class ReachFirstCommunityValueHandler {
+  +Handle(request: ReachFirstCommunityValueRequest): Task<ReachFirstCommunityValueDecision>
+}
+
+class ReachFirstCommunityValueProjector {
+  +Project(decision: ReachFirstCommunityValueDecision): Task<void>
+}
+
+ReachFirstCommunityValueHandler ..> ReachFirstCommunityValueRequest : handles
+ReachFirstCommunityValueHandler ..> ReachFirstCommunityValuePolicy : evaluates with
+ReachFirstCommunityValueHandler --> IReachFirstCommunityValueRepository : loads / commits
+IReachFirstCommunityValueRepository --> ReachFirstCommunityValueRecord : persists
+ReachFirstCommunityValuePolicy ..> ReachFirstCommunityValueRecord : inspects
+ReachFirstCommunityValuePolicy --> ReachFirstCommunityValueDecision : produces
+ReachFirstCommunityValueRecord ..> ReachFirstCommunityValueDecision : applies accepted
+ReachFirstCommunityValueProjector ..> ReachFirstCommunityValueDecision : consumes committed
+@enduml

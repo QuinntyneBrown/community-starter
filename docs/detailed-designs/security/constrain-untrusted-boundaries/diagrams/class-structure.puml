@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Constrain every untrusted boundary
+
+class ConstrainUntrustedBoundariesRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ConstrainUntrustedBoundariesDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ConstrainUntrustedBoundariesRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ConstrainUntrustedBoundariesDecision): void
+}
+
+interface IConstrainUntrustedBoundariesRepository {
+  +Load(subjectId: string): Task<ConstrainUntrustedBoundariesRecord>
+  +Commit(record: ConstrainUntrustedBoundariesRecord, expectedVersion: long): Task<bool>
+}
+
+class ConstrainUntrustedBoundariesPolicy {
+  +Evaluate(record: ConstrainUntrustedBoundariesRecord, request: ConstrainUntrustedBoundariesRequest): ConstrainUntrustedBoundariesDecision
+  +UntrustedInputIsValidatedAndResourceBounded(record: ConstrainUntrustedBoundariesRecord, request: ConstrainUntrustedBoundariesRequest): ConstrainUntrustedBoundariesDecision
+  +UploadsValidateContentAndIsolateStoragePaths(record: ConstrainUntrustedBoundariesRecord, request: ConstrainUntrustedBoundariesRequest): ConstrainUntrustedBoundariesDecision
+  +SecuritySensitiveWorkflowTransitionsFailClosed(record: ConstrainUntrustedBoundariesRecord, request: ConstrainUntrustedBoundariesRequest): ConstrainUntrustedBoundariesDecision
+  +RenderUntrustedTextLinksAndExportsSafely(record: ConstrainUntrustedBoundariesRecord, request: ConstrainUntrustedBoundariesRequest): ConstrainUntrustedBoundariesDecision
+}
+
+class ConstrainUntrustedBoundariesHandler {
+  +Handle(request: ConstrainUntrustedBoundariesRequest): Task<ConstrainUntrustedBoundariesDecision>
+}
+
+class ConstrainUntrustedBoundariesProjector {
+  +Project(decision: ConstrainUntrustedBoundariesDecision): Task<void>
+}
+
+ConstrainUntrustedBoundariesHandler ..> ConstrainUntrustedBoundariesRequest : handles
+ConstrainUntrustedBoundariesHandler ..> ConstrainUntrustedBoundariesPolicy : evaluates with
+ConstrainUntrustedBoundariesHandler --> IConstrainUntrustedBoundariesRepository : loads / commits
+IConstrainUntrustedBoundariesRepository --> ConstrainUntrustedBoundariesRecord : persists
+ConstrainUntrustedBoundariesPolicy ..> ConstrainUntrustedBoundariesRecord : inspects
+ConstrainUntrustedBoundariesPolicy --> ConstrainUntrustedBoundariesDecision : produces
+ConstrainUntrustedBoundariesRecord ..> ConstrainUntrustedBoundariesDecision : applies accepted
+ConstrainUntrustedBoundariesProjector ..> ConstrainUntrustedBoundariesDecision : consumes committed
+@enduml

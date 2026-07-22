@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Scoped Event access
+
+class EnforceEventAccessRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class EnforceEventAccessDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class EnforceEventAccessRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: EnforceEventAccessDecision): void
+}
+
+interface IEnforceEventAccessRepository {
+  +Load(subjectId: string): Task<EnforceEventAccessRecord>
+  +Commit(record: EnforceEventAccessRecord, expectedVersion: long): Task<bool>
+}
+
+class EnforceEventAccessPolicy {
+  +Evaluate(record: EnforceEventAccessRecord, request: EnforceEventAccessRequest): EnforceEventAccessDecision
+  +AuthorizeEventOrganizers(record: EnforceEventAccessRecord, request: EnforceEventAccessRequest): EnforceEventAccessDecision
+  +EnforceEventAudienceAndDiscovery(record: EnforceEventAccessRecord, request: EnforceEventAccessRequest): EnforceEventAccessDecision
+  +ProtectAttendeeAndLocationPrivacy(record: EnforceEventAccessRecord, request: EnforceEventAccessRequest): EnforceEventAccessDecision
+}
+
+class EnforceEventAccessHandler {
+  +Handle(request: EnforceEventAccessRequest): Task<EnforceEventAccessDecision>
+}
+
+class EnforceEventAccessProjector {
+  +Project(decision: EnforceEventAccessDecision): Task<void>
+}
+
+EnforceEventAccessHandler ..> EnforceEventAccessRequest : handles
+EnforceEventAccessHandler ..> EnforceEventAccessPolicy : evaluates with
+EnforceEventAccessHandler --> IEnforceEventAccessRepository : loads / commits
+IEnforceEventAccessRepository --> EnforceEventAccessRecord : persists
+EnforceEventAccessPolicy ..> EnforceEventAccessRecord : inspects
+EnforceEventAccessPolicy --> EnforceEventAccessDecision : produces
+EnforceEventAccessRecord ..> EnforceEventAccessDecision : applies accepted
+EnforceEventAccessProjector ..> EnforceEventAccessDecision : consumes committed
+@enduml

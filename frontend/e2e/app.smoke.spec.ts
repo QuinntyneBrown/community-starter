@@ -40,7 +40,9 @@ test('anonymous member journey renders without browser failures', async ({ page 
   expect(errorResponses[0]?.url).toMatch(/\/api\/me$/);
   expect(
     browserErrors.filter(
-      (message) => message !== 'Failed to load resource: the server responded with a status of 401 (Unauthorized)',
+      (message) =>
+        message !==
+        'Failed to load resource: the server responded with a status of 401 (Unauthorized)',
     ),
   ).toEqual([]);
 });

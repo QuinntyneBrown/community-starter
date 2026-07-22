@@ -30,12 +30,34 @@ evidence.
 
 ## Quick start
 
+### Create a new project
+
+Generate an independently named project in a new directory while leaving this reusable repository
+unchanged:
+
+```powershell
+./eng/new-project.ps1 `
+  -DisplayName "Harbor Circle" `
+  -CodeName "HarborCircle" `
+  -OutputPath ../harbor-circle
+```
+
+The command derives package, database, deployment, selector, and cookie identifiers from the safe
+PascalCase code name. It rewrites requirements and generated designs, re-renders affected diagrams,
+runs the complete quality gate, audits the result for residual template identity, and initializes a
+fresh `main` Git repository without a commit or inherited remote. The destination must not already
+exist and must be outside this repository.
+
+Use `-SkipQualityCheck` only when testing the transformation itself; it skips the .NET and web build
+gate but retains identity, requirements, diagram, and detailed-design verification.
+
 ### Prerequisites
 
 - [PowerShell 7](https://learn.microsoft.com/powershell/scripting/install/installing-powershell)
 - [.NET SDK 10.0.101](https://dotnet.microsoft.com/download) or a compatible 10.0 patch
 - [Node.js 24.18.0](https://nodejs.org/) and npm 11.6.2
 - [Python 3.13](https://www.python.org/downloads/) for design and quality checks
+- [Java 17 or later](https://adoptium.net/) for rendering specialized PlantUML diagrams
 - [Docker](https://docs.docker.com/get-docker/) with Docker Compose
 
 The repository pins the .NET and Node.js versions in [`global.json`](global.json) and
@@ -101,6 +123,7 @@ The underlying commands are available when working on one layer:
 | Scope                        | Command                                                                          |
 | ---------------------------- | -------------------------------------------------------------------------------- |
 | Verify detailed designs      | `python scripts/verify_detailed_designs.py`                                      |
+| Test project specialization  | `npm run test:specialization`                                                    |
 | Regenerate feature contracts | `python scripts/generate_feature_contracts.py`                                   |
 | Restore backend              | `dotnet restore backend/CommunityStarter.sln --locked-mode`                      |
 | Build backend                | `dotnet build backend/CommunityStarter.sln --configuration Release --no-restore` |

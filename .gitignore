@@ -6,6 +6,8 @@
 **/.angular/
 **/.astro/
 **/coverage/
+**/__pycache__/
+*.pyc
 TestResults/
 **/test-results/
 artifacts/

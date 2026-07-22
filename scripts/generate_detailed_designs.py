@@ -12,8 +12,11 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from project_identity import load_project_identity
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+IDENTITY = load_project_identity(REPO_ROOT)
 SPECS_ROOT = REPO_ROOT / "docs" / "specs"
 DESIGNS_ROOT = REPO_ROOT / "docs" / "detailed-designs"
 
@@ -125,7 +128,7 @@ KIND_DEFAULTS = {
         "endpoint_kind": "HTTP endpoint",
     },
     "engineering": {
-        "system": "Community Starter Delivery System",
+        "system": f"{IDENTITY.display_name} Delivery System",
         "system_desc": "Build, verification, promotion, and engineering evidence system",
         "frontend": "Engineering Workbench",
         "frontend_tech": "CLI and repository tools",
@@ -220,7 +223,7 @@ KIND_DEFAULTS = {
         "endpoint_kind": "security control endpoint",
     },
     "starter": {
-        "system": "Community Starter",
+        "system": IDENTITY.display_name,
         "system_desc": "Reproducible development, specialization, and repository guidance system",
         "frontend": "Developer Workspace",
         "frontend_tech": "CLI and editor tasks",
@@ -481,7 +484,7 @@ state changes commit before optional derived work starts.
 
 ## Overview
 
-Community Starter is a community platform divided into product and platform subsystems. The
+{IDENTITY.display_name} is a community platform divided into product and platform subsystems. The
 {subsystem.title} subsystem owns this feature.
 
 *{lower_first(feature.title)}* — subsystem capability that covers {behavior_names}

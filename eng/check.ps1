@@ -8,6 +8,7 @@ $repositoryRoot = Split-Path -Parent $PSScriptRoot
 
 Push-Location $repositoryRoot
 try {
+    python -m unittest discover -s scripts/tests -p 'test_*.py'
     python scripts/verify_detailed_designs.py
     python scripts/generate_feature_contracts.py
     dotnet restore backend/CommunityStarter.sln --locked-mode

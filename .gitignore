@@ -7,6 +7,7 @@
 **/.astro/
 **/coverage/
 TestResults/
+**/test-results/
 artifacts/
 
 # Local environment and tools
@@ -22,4 +23,3 @@ artifacts/
 # Operating systems
 .DS_Store
 Thumbs.db
-

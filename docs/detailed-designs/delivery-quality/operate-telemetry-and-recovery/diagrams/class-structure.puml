@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Operate the starter with actionable telemetry and recovery
+
+class OperateTelemetryAndRecoveryRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class OperateTelemetryAndRecoveryDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class OperateTelemetryAndRecoveryRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: OperateTelemetryAndRecoveryDecision): void
+}
+
+interface IOperateTelemetryAndRecoveryRepository {
+  +Load(subjectId: string): Task<OperateTelemetryAndRecoveryRecord>
+  +Commit(record: OperateTelemetryAndRecoveryRecord, expectedVersion: long): Task<bool>
+}
+
+class OperateTelemetryAndRecoveryPolicy {
+  +Evaluate(record: OperateTelemetryAndRecoveryRecord, request: OperateTelemetryAndRecoveryRequest): OperateTelemetryAndRecoveryDecision
+  +LogsMetricsTracesAndHealthExposeActionableSignals(record: OperateTelemetryAndRecoveryRecord, request: OperateTelemetryAndRecoveryRequest): OperateTelemetryAndRecoveryDecision
+  +AlertsRecoveryMigrationRetentionAndIncidentsHaveOwnersAndRehearsal(record: OperateTelemetryAndRecoveryRecord, request: OperateTelemetryAndRecoveryRequest): OperateTelemetryAndRecoveryDecision
+}
+
+class OperateTelemetryAndRecoveryHandler {
+  +Handle(request: OperateTelemetryAndRecoveryRequest): Task<OperateTelemetryAndRecoveryDecision>
+}
+
+class OperateTelemetryAndRecoveryProjector {
+  +Project(decision: OperateTelemetryAndRecoveryDecision): Task<void>
+}
+
+OperateTelemetryAndRecoveryHandler ..> OperateTelemetryAndRecoveryRequest : handles
+OperateTelemetryAndRecoveryHandler ..> OperateTelemetryAndRecoveryPolicy : evaluates with
+OperateTelemetryAndRecoveryHandler --> IOperateTelemetryAndRecoveryRepository : loads / commits
+IOperateTelemetryAndRecoveryRepository --> OperateTelemetryAndRecoveryRecord : persists
+OperateTelemetryAndRecoveryPolicy ..> OperateTelemetryAndRecoveryRecord : inspects
+OperateTelemetryAndRecoveryPolicy --> OperateTelemetryAndRecoveryDecision : produces
+OperateTelemetryAndRecoveryRecord ..> OperateTelemetryAndRecoveryDecision : applies accepted
+OperateTelemetryAndRecoveryProjector ..> OperateTelemetryAndRecoveryDecision : consumes committed
+@enduml

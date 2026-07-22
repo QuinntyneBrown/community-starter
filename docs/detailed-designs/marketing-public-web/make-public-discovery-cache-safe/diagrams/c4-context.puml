@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Make public discovery fast, private, and cache-safe
+
+Person(actor, "Visitor", "Reads public content and chooses an available application action")
+System(system, "Community Public Web", "Static public content, Community previews, and application navigation")
+System_Ext(external, "CDN and Search Crawlers", "Public caching, routing, and indexing systems")
+
+Rel(actor, system, "Uses for make public discovery fast, private, and cache-safe", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

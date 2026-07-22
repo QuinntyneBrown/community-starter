@@ -1,0 +1,51 @@
+name: quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Pin npm
+        run: npm install --global npm@11.6.2
+      - name: Verify generated design artifacts
+        run: |
+          python scripts/verify_detailed_designs.py
+          python scripts/generate_feature_contracts.py
+          git diff --exit-code
+      - name: Restore and audit .NET dependencies
+        run: |
+          dotnet restore backend/CommunityStarter.sln
+          dotnet list backend/CommunityStarter.sln package --vulnerable --include-transitive
+      - name: Build and test .NET
+        run: |
+          dotnet build backend/CommunityStarter.sln --configuration Release --no-restore
+          dotnet test backend/CommunityStarter.sln --configuration Release --no-build
+      - name: Install, audit, format, test, and build web applications
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+        run: |
+          npm ci
+          npm audit --audit-level=high
+          npm run format:check
+          npm run test
+          npm run build
+      - name: Build production OCI image
+        run: docker build --tag community-starter:${{ github.sha }} .

@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Coordinated and safe participation
+
+Person(actor, "Event Organizer", "Creates Events and coordinates eligible attendance")
+System(system, "Community Platform", "Community participation, administration, and safety system")
+System_Ext(external, "Delivery and Storage Providers", "Purpose-bound email, media, and infrastructure services")
+
+Rel(actor, system, "Uses for coordinated and safe participation", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

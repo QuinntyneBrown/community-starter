@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Incidents have owned detection and response
+
+class RespondToIncidentsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class RespondToIncidentsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class RespondToIncidentsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: RespondToIncidentsDecision): void
+}
+
+interface IRespondToIncidentsRepository {
+  +Load(subjectId: string): Task<RespondToIncidentsRecord>
+  +Commit(record: RespondToIncidentsRecord, expectedVersion: long): Task<bool>
+}
+
+class RespondToIncidentsPolicy {
+  +Evaluate(record: RespondToIncidentsRecord, request: RespondToIncidentsRequest): RespondToIncidentsDecision
+  +RouteActionableAlertsToAnOwner(record: RespondToIncidentsRecord, request: RespondToIncidentsRequest): RespondToIncidentsDecision
+  +RunAndReviewIncidentsConsistently(record: RespondToIncidentsRecord, request: RespondToIncidentsRequest): RespondToIncidentsDecision
+  +MaintainExecutableOperationalRunbooks(record: RespondToIncidentsRecord, request: RespondToIncidentsRequest): RespondToIncidentsDecision
+}
+
+class RespondToIncidentsHandler {
+  +Handle(request: RespondToIncidentsRequest): Task<RespondToIncidentsDecision>
+}
+
+class RespondToIncidentsProjector {
+  +Project(decision: RespondToIncidentsDecision): Task<void>
+}
+
+RespondToIncidentsHandler ..> RespondToIncidentsRequest : handles
+RespondToIncidentsHandler ..> RespondToIncidentsPolicy : evaluates with
+RespondToIncidentsHandler --> IRespondToIncidentsRepository : loads / commits
+IRespondToIncidentsRepository --> RespondToIncidentsRecord : persists
+RespondToIncidentsPolicy ..> RespondToIncidentsRecord : inspects
+RespondToIncidentsPolicy --> RespondToIncidentsDecision : produces
+RespondToIncidentsRecord ..> RespondToIncidentsDecision : applies accepted
+RespondToIncidentsProjector ..> RespondToIncidentsDecision : consumes committed
+@enduml

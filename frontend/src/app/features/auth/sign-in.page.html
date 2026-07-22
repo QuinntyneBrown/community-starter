@@ -1,0 +1,35 @@
+<section class="auth-page cs-page">
+  <div class="auth-page__intro">
+    <p class="cs-eyebrow">Welcome back</p>
+    <h1>Return to your communities.</h1>
+    <p>Sign in to contribute, coordinate, and care for the groups you belong to.</p>
+  </div>
+  <form class="cs-card cs-form cs-stack" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h2>Sign in</h2>
+    @if (problem()) {
+      <div class="cs-error" role="alert">
+        <strong>{{ problem()?.title }}</strong>
+        @if (problem()?.traceId) {
+          <small>Reference: {{ problem()?.traceId }}</small>
+        }
+      </div>
+    }
+    <div class="cs-field">
+      <label for="sign-in-email">Email</label>
+      <input id="sign-in-email" type="email" autocomplete="username" formControlName="email" />
+    </div>
+    <div class="cs-field">
+      <label for="sign-in-password">Password</label>
+      <input
+        id="sign-in-password"
+        type="password"
+        autocomplete="current-password"
+        formControlName="password"
+      />
+    </div>
+    <button class="cs-button" type="submit" [disabled]="isSubmitting()">
+      {{ isSubmitting() ? 'Signing in…' : 'Sign in' }}
+    </button>
+    <p>New here? <a routerLink="/register">Create an account</a>.</p>
+  </form>
+</section>

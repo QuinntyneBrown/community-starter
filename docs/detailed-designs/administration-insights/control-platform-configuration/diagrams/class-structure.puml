@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Controlled platform configuration
+
+class ControlPlatformConfigurationRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ControlPlatformConfigurationDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ControlPlatformConfigurationRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ControlPlatformConfigurationDecision): void
+}
+
+interface IControlPlatformConfigurationRepository {
+  +Load(subjectId: string): Task<ControlPlatformConfigurationRecord>
+  +Commit(record: ControlPlatformConfigurationRecord, expectedVersion: long): Task<bool>
+}
+
+class ControlPlatformConfigurationPolicy {
+  +Evaluate(record: ControlPlatformConfigurationRecord, request: ControlPlatformConfigurationRequest): ControlPlatformConfigurationDecision
+  +PreserveConfigurationHistoryAndRollback(record: ControlPlatformConfigurationRecord, request: ControlPlatformConfigurationRequest): ControlPlatformConfigurationDecision
+  +GovernFeatureFlagsAndKillSwitches(record: ControlPlatformConfigurationRecord, request: ControlPlatformConfigurationRequest): ControlPlatformConfigurationDecision
+}
+
+class ControlPlatformConfigurationHandler {
+  +Handle(request: ControlPlatformConfigurationRequest): Task<ControlPlatformConfigurationDecision>
+}
+
+class ControlPlatformConfigurationProjector {
+  +Project(decision: ControlPlatformConfigurationDecision): Task<void>
+}
+
+ControlPlatformConfigurationHandler ..> ControlPlatformConfigurationRequest : handles
+ControlPlatformConfigurationHandler ..> ControlPlatformConfigurationPolicy : evaluates with
+ControlPlatformConfigurationHandler --> IControlPlatformConfigurationRepository : loads / commits
+IControlPlatformConfigurationRepository --> ControlPlatformConfigurationRecord : persists
+ControlPlatformConfigurationPolicy ..> ControlPlatformConfigurationRecord : inspects
+ControlPlatformConfigurationPolicy --> ControlPlatformConfigurationDecision : produces
+ControlPlatformConfigurationRecord ..> ControlPlatformConfigurationDecision : applies accepted
+ControlPlatformConfigurationProjector ..> ControlPlatformConfigurationDecision : consumes committed
+@enduml

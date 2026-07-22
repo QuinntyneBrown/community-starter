@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Relevant and private Notifications
+
+class DeliverPrivateNotificationsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class DeliverPrivateNotificationsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class DeliverPrivateNotificationsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: DeliverPrivateNotificationsDecision): void
+}
+
+interface IDeliverPrivateNotificationsRepository {
+  +Load(subjectId: string): Task<DeliverPrivateNotificationsRecord>
+  +Commit(record: DeliverPrivateNotificationsRecord, expectedVersion: long): Task<bool>
+}
+
+class DeliverPrivateNotificationsPolicy {
+  +Evaluate(record: DeliverPrivateNotificationsRecord, request: DeliverPrivateNotificationsRequest): DeliverPrivateNotificationsDecision
+  +CreateNotificationsAfterCommit(record: DeliverPrivateNotificationsRecord, request: DeliverPrivateNotificationsRequest): DeliverPrivateNotificationsDecision
+  +RecheckRecipientEligibility(record: DeliverPrivateNotificationsRecord, request: DeliverPrivateNotificationsRequest): DeliverPrivateNotificationsDecision
+  +MaintainAUsableNotificationInbox(record: DeliverPrivateNotificationsRecord, request: DeliverPrivateNotificationsRequest): DeliverPrivateNotificationsDecision
+}
+
+class DeliverPrivateNotificationsHandler {
+  +Handle(request: DeliverPrivateNotificationsRequest): Task<DeliverPrivateNotificationsDecision>
+}
+
+class DeliverPrivateNotificationsProjector {
+  +Project(decision: DeliverPrivateNotificationsDecision): Task<void>
+}
+
+DeliverPrivateNotificationsHandler ..> DeliverPrivateNotificationsRequest : handles
+DeliverPrivateNotificationsHandler ..> DeliverPrivateNotificationsPolicy : evaluates with
+DeliverPrivateNotificationsHandler --> IDeliverPrivateNotificationsRepository : loads / commits
+IDeliverPrivateNotificationsRepository --> DeliverPrivateNotificationsRecord : persists
+DeliverPrivateNotificationsPolicy ..> DeliverPrivateNotificationsRecord : inspects
+DeliverPrivateNotificationsPolicy --> DeliverPrivateNotificationsDecision : produces
+DeliverPrivateNotificationsRecord ..> DeliverPrivateNotificationsDecision : applies accepted
+DeliverPrivateNotificationsProjector ..> DeliverPrivateNotificationsDecision : consumes committed
+@enduml

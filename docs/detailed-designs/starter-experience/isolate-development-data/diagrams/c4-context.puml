@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Development data is useful and cannot leak into production
+
+Person(actor, "Starter Adopter", "Configures and specializes a clean repository checkout")
+System(system, "Community Starter", "Reproducible development, specialization, and repository guidance system")
+System_Ext(external, "Package Registries and Local Providers", "Toolchain, package, and development dependency services")
+
+Rel(actor, system, "Uses for development data is useful and cannot leak into production", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

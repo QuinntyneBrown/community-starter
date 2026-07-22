@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Protect Community data and persistence integrity
+
+class ProtectDataPersistenceIntegrityRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ProtectDataPersistenceIntegrityDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ProtectDataPersistenceIntegrityRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ProtectDataPersistenceIntegrityDecision): void
+}
+
+interface IProtectDataPersistenceIntegrityRepository {
+  +Load(subjectId: string): Task<ProtectDataPersistenceIntegrityRecord>
+  +Commit(record: ProtectDataPersistenceIntegrityRecord, expectedVersion: long): Task<bool>
+}
+
+class ProtectDataPersistenceIntegrityPolicy {
+  +Evaluate(record: ProtectDataPersistenceIntegrityRecord, request: ProtectDataPersistenceIntegrityRequest): ProtectDataPersistenceIntegrityDecision
+  +RelationalSchemaEvolutionIsForwardAndRehearsable(record: ProtectDataPersistenceIntegrityRecord, request: ProtectDataPersistenceIntegrityRequest): ProtectDataPersistenceIntegrityDecision
+  +CommunityScopedReadsAreExplicitAndEfficient(record: ProtectDataPersistenceIntegrityRecord, request: ProtectDataPersistenceIntegrityRequest): ProtectDataPersistenceIntegrityDecision
+  +TimeDemonstrationDataAndLifecycleStateAreDeliberate(record: ProtectDataPersistenceIntegrityRecord, request: ProtectDataPersistenceIntegrityRequest): ProtectDataPersistenceIntegrityDecision
+}
+
+class ProtectDataPersistenceIntegrityHandler {
+  +Handle(request: ProtectDataPersistenceIntegrityRequest): Task<ProtectDataPersistenceIntegrityDecision>
+}
+
+class ProtectDataPersistenceIntegrityProjector {
+  +Project(decision: ProtectDataPersistenceIntegrityDecision): Task<void>
+}
+
+ProtectDataPersistenceIntegrityHandler ..> ProtectDataPersistenceIntegrityRequest : handles
+ProtectDataPersistenceIntegrityHandler ..> ProtectDataPersistenceIntegrityPolicy : evaluates with
+ProtectDataPersistenceIntegrityHandler --> IProtectDataPersistenceIntegrityRepository : loads / commits
+IProtectDataPersistenceIntegrityRepository --> ProtectDataPersistenceIntegrityRecord : persists
+ProtectDataPersistenceIntegrityPolicy ..> ProtectDataPersistenceIntegrityRecord : inspects
+ProtectDataPersistenceIntegrityPolicy --> ProtectDataPersistenceIntegrityDecision : produces
+ProtectDataPersistenceIntegrityRecord ..> ProtectDataPersistenceIntegrityDecision : applies accepted
+ProtectDataPersistenceIntegrityProjector ..> ProtectDataPersistenceIntegrityDecision : consumes committed
+@enduml

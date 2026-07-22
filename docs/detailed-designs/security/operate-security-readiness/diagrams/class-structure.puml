@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Operate with explicit privacy and security readiness
+
+class OperateSecurityReadinessRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class OperateSecurityReadinessDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class OperateSecurityReadinessRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: OperateSecurityReadinessDecision): void
+}
+
+interface IOperateSecurityReadinessRepository {
+  +Load(subjectId: string): Task<OperateSecurityReadinessRecord>
+  +Commit(record: OperateSecurityReadinessRecord, expectedVersion: long): Task<bool>
+}
+
+class OperateSecurityReadinessPolicy {
+  +Evaluate(record: OperateSecurityReadinessRecord, request: OperateSecurityReadinessRequest): OperateSecurityReadinessDecision
+  +VulnerabilitiesHaveAPrivateReportingAndRemediationPath(record: OperateSecurityReadinessRecord, request: OperateSecurityReadinessRequest): OperateSecurityReadinessDecision
+  +PrivacyConsentRetentionAndAnalyticsPurposeAreDeclared(record: OperateSecurityReadinessRecord, request: OperateSecurityReadinessRequest): OperateSecurityReadinessDecision
+  +ProductionSecurityClaimsDistinguishChecksFromIndependentReview(record: OperateSecurityReadinessRecord, request: OperateSecurityReadinessRequest): OperateSecurityReadinessDecision
+}
+
+class OperateSecurityReadinessHandler {
+  +Handle(request: OperateSecurityReadinessRequest): Task<OperateSecurityReadinessDecision>
+}
+
+class OperateSecurityReadinessProjector {
+  +Project(decision: OperateSecurityReadinessDecision): Task<void>
+}
+
+OperateSecurityReadinessHandler ..> OperateSecurityReadinessRequest : handles
+OperateSecurityReadinessHandler ..> OperateSecurityReadinessPolicy : evaluates with
+OperateSecurityReadinessHandler --> IOperateSecurityReadinessRepository : loads / commits
+IOperateSecurityReadinessRepository --> OperateSecurityReadinessRecord : persists
+OperateSecurityReadinessPolicy ..> OperateSecurityReadinessRecord : inspects
+OperateSecurityReadinessPolicy --> OperateSecurityReadinessDecision : produces
+OperateSecurityReadinessRecord ..> OperateSecurityReadinessDecision : applies accepted
+OperateSecurityReadinessProjector ..> OperateSecurityReadinessDecision : consumes committed
+@enduml

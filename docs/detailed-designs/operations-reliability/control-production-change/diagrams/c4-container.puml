@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers — Production change remains controlled and supportable
+
+Person(actor, "Platform Operator", "Observes, restores, and changes the production service")
+System_Ext(external, "Telemetry and Paging Providers", "Metrics, traces, logs, alerts, and responder routing")
+System_Boundary(system, "Community Platform Operations") {
+  Container(frontend, "Operations Console", "Web dashboard and runbook tools", "Collects intent and presents current state")
+  Container(backend, "Operations Control API", "Automation services", "Applies synchronous boundary and application policy")
+  Container(worker, "Recovery and Reconciliation Worker", "Automation jobs", "Processes idempotent post-commit work")
+  ContainerDb(store, "Operations Evidence Store", "Relational and object storage", "Stores authoritative state and durable outcomes")
+}
+
+Rel(actor, frontend, "Uses", "HTTPS or local command")
+Rel(frontend, backend, "Submits typed intent", "Typed contract")
+Rel(backend, store, "Reads and conditionally writes", "Transactional adapter")
+Rel(backend, worker, "Publishes committed outcomes", "Durable queue")
+Rel(worker, store, "Reads outcomes and checkpoints", "Idempotent adapter")
+Rel(worker, external, "Invokes eligible external work", "Purpose-bound contract")
+@enduml

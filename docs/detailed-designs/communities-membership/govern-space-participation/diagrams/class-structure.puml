@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Govern Spaces and participation rules
+
+class GovernSpaceParticipationRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class GovernSpaceParticipationDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class GovernSpaceParticipationRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: GovernSpaceParticipationDecision): void
+}
+
+interface IGovernSpaceParticipationRepository {
+  +Load(subjectId: string): Task<GovernSpaceParticipationRecord>
+  +Commit(record: GovernSpaceParticipationRecord, expectedVersion: long): Task<bool>
+}
+
+class GovernSpaceParticipationPolicy {
+  +Evaluate(record: GovernSpaceParticipationRecord, request: GovernSpaceParticipationRequest): GovernSpaceParticipationDecision
+  +GovernSpaceLifecycle(record: GovernSpaceParticipationRecord, request: GovernSpaceParticipationRequest): GovernSpaceParticipationDecision
+  +EnforceSpaceAccess(record: GovernSpaceParticipationRecord, request: GovernSpaceParticipationRequest): GovernSpaceParticipationDecision
+  +DelegateSpaceAuthority(record: GovernSpaceParticipationRecord, request: GovernSpaceParticipationRequest): GovernSpaceParticipationDecision
+  +AcceptVersionedRules(record: GovernSpaceParticipationRecord, request: GovernSpaceParticipationRequest): GovernSpaceParticipationDecision
+}
+
+class GovernSpaceParticipationHandler {
+  +Handle(request: GovernSpaceParticipationRequest): Task<GovernSpaceParticipationDecision>
+}
+
+class GovernSpaceParticipationProjector {
+  +Project(decision: GovernSpaceParticipationDecision): Task<void>
+}
+
+GovernSpaceParticipationHandler ..> GovernSpaceParticipationRequest : handles
+GovernSpaceParticipationHandler ..> GovernSpaceParticipationPolicy : evaluates with
+GovernSpaceParticipationHandler --> IGovernSpaceParticipationRepository : loads / commits
+IGovernSpaceParticipationRepository --> GovernSpaceParticipationRecord : persists
+GovernSpaceParticipationPolicy ..> GovernSpaceParticipationRecord : inspects
+GovernSpaceParticipationPolicy --> GovernSpaceParticipationDecision : produces
+GovernSpaceParticipationRecord ..> GovernSpaceParticipationDecision : applies accepted
+GovernSpaceParticipationProjector ..> GovernSpaceParticipationDecision : consumes committed
+@enduml

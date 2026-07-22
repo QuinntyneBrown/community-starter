@@ -1,0 +1,39 @@
+<section class="cs-page">
+  <header class="cs-page__header">
+    <p class="cs-eyebrow">Product contract</p>
+    <h1>Community capability map</h1>
+    <p>
+      {{ featureCount }} feature contracts and {{ operationCount }} requirement-linked operations
+      define the Community Starter surface. This inventory is generated from the detailed designs so
+      implementation and documentation can be checked together.
+    </p>
+  </header>
+
+  <div class="catalog-groups">
+    @for (group of groups; track group.subsystem) {
+      <details class="cs-card catalog-group">
+        <summary>
+          <span>{{ group.label }}</span>
+          <small
+            >{{ group.features.length }} features · {{ group.operationCount }} operations</small
+          >
+        </summary>
+        <div class="catalog-features">
+          @for (feature of group.features; track feature.slug) {
+            <article>
+              <h2>{{ feature.title }}</h2>
+              <p class="cs-muted">{{ feature.slug }}</p>
+              <ul>
+                @for (operation of feature.operations; track operation.requirementId) {
+                  <li>
+                    <code>{{ operation.requirementId }}</code> {{ operation.method }}
+                  </li>
+                }
+              </ul>
+            </article>
+          }
+        </div>
+      </details>
+    }
+  </div>
+</section>

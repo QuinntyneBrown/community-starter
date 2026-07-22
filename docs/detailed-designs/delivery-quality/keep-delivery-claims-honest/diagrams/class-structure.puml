@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Keep delivery claims and documentation honest
+
+class KeepDeliveryClaimsHonestRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class KeepDeliveryClaimsHonestDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class KeepDeliveryClaimsHonestRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: KeepDeliveryClaimsHonestDecision): void
+}
+
+interface IKeepDeliveryClaimsHonestRepository {
+  +Load(subjectId: string): Task<KeepDeliveryClaimsHonestRecord>
+  +Commit(record: KeepDeliveryClaimsHonestRecord, expectedVersion: long): Task<bool>
+}
+
+class KeepDeliveryClaimsHonestPolicy {
+  +Evaluate(record: KeepDeliveryClaimsHonestRecord, request: KeepDeliveryClaimsHonestRequest): KeepDeliveryClaimsHonestDecision
+  +PullRequestsAndHandoffsExposeImpactAndVerification(record: KeepDeliveryClaimsHonestRecord, request: KeepDeliveryClaimsHonestRequest): KeepDeliveryClaimsHonestDecision
+  +DocumentationAndDecisionEvidenceStayCurrentWithBehavior(record: KeepDeliveryClaimsHonestRecord, request: KeepDeliveryClaimsHonestRequest): KeepDeliveryClaimsHonestDecision
+  +DefinitionOfDoneAndProductionReadinessClaimsMatchEvidence(record: KeepDeliveryClaimsHonestRecord, request: KeepDeliveryClaimsHonestRequest): KeepDeliveryClaimsHonestDecision
+}
+
+class KeepDeliveryClaimsHonestHandler {
+  +Handle(request: KeepDeliveryClaimsHonestRequest): Task<KeepDeliveryClaimsHonestDecision>
+}
+
+class KeepDeliveryClaimsHonestProjector {
+  +Project(decision: KeepDeliveryClaimsHonestDecision): Task<void>
+}
+
+KeepDeliveryClaimsHonestHandler ..> KeepDeliveryClaimsHonestRequest : handles
+KeepDeliveryClaimsHonestHandler ..> KeepDeliveryClaimsHonestPolicy : evaluates with
+KeepDeliveryClaimsHonestHandler --> IKeepDeliveryClaimsHonestRepository : loads / commits
+IKeepDeliveryClaimsHonestRepository --> KeepDeliveryClaimsHonestRecord : persists
+KeepDeliveryClaimsHonestPolicy ..> KeepDeliveryClaimsHonestRecord : inspects
+KeepDeliveryClaimsHonestPolicy --> KeepDeliveryClaimsHonestDecision : produces
+KeepDeliveryClaimsHonestRecord ..> KeepDeliveryClaimsHonestDecision : applies accepted
+KeepDeliveryClaimsHonestProjector ..> KeepDeliveryClaimsHonestDecision : consumes committed
+@enduml

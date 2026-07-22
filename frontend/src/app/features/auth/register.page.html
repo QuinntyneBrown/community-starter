@@ -1,0 +1,49 @@
+<section class="auth-page cs-page">
+  <div class="auth-page__intro">
+    <p class="cs-eyebrow">Begin with purpose</p>
+    <h1>Create an account, then find your people.</h1>
+    <p>
+      Your account remains unverified and cannot enter a community until you confirm your email.
+    </p>
+  </div>
+  @if (isComplete()) {
+    <div class="cs-card cs-stack" aria-live="polite">
+      <h2>Check your email</h2>
+      <p>Use the private verification link sent to your address. It expires after 24 hours.</p>
+      @if (developmentToken()) {
+        <p class="development-note">
+          Development only:
+          <a [routerLink]="['/verify']" [queryParams]="{ token: developmentToken() }"
+            >verify this account</a
+          >.
+        </p>
+      }
+    </div>
+  } @else {
+    <form class="cs-card cs-form cs-stack" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <h2>Create account</h2>
+      @if (problem()) {
+        <div class="cs-error" role="alert">{{ problem()?.title }}</div>
+      }
+      <div class="cs-field">
+        <label for="register-email">Email</label>
+        <input id="register-email" type="email" autocomplete="email" formControlName="email" />
+      </div>
+      <div class="cs-field">
+        <label for="register-password">Password</label>
+        <input
+          id="register-password"
+          type="password"
+          autocomplete="new-password"
+          formControlName="password"
+          aria-describedby="password-help"
+        />
+        <small id="password-help">Use at least 12 characters. Password managers are welcome.</small>
+      </div>
+      <button class="cs-button" type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Creating account…' : 'Create account' }}
+      </button>
+      <p>Already have an account? <a routerLink="/sign-in">Sign in</a>.</p>
+    </form>
+  }
+</section>

@@ -1,0 +1,23 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components — Meet an inclusive accessibility baseline
+
+Container(frontend, "Component Workbench", "Angular and Storybook", "Presents state and sends typed intent")
+Container_Boundary(backend, "Design Validation Pipeline") {
+  Component(endpoint, "MeetAccessibilityBaselineEndpoint", "validation entry point", "Authenticates and dispatches feature requests")
+  Component(handler, "MeetAccessibilityBaselineHandler", "Application service", "Coordinates authorized state and one unit of work")
+  Component(policy, "MeetAccessibilityBaselinePolicy", "Domain policy", "Evaluates traced behavior against current state")
+  Component(repository, "IMeetAccessibilityBaselineRepository", "Persistence port", "Loads scoped state and commits conditionally")
+  Component(projector, "MeetAccessibilityBaselineProjector", "Post-commit component", "Processes committed outcomes idempotently")
+  ComponentDb(store, "Design Artifact Registry", "Versioned files", "Stores state, versions, outcomes, and checkpoints")
+}
+
+Rel(frontend, endpoint, "Submits MeetAccessibilityBaselineRequest", "Typed contract")
+Rel(endpoint, handler, "Dispatches request")
+Rel(handler, policy, "Evaluates current state")
+Rel(handler, repository, "Loads and commits")
+Rel(repository, store, "Reads and writes", "Transactional adapter")
+Rel(handler, projector, "Publishes committed outcome", "Durable handoff")
+Rel(projector, store, "Checkpoints processing", "Idempotent adapter")
+@enduml

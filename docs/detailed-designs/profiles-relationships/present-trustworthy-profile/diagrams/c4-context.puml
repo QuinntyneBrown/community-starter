@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Present a trustworthy Profile
+
+Person(actor, "Community Member", "Presents identity and manages relationship boundaries")
+System(system, "Community Platform", "Community participation, administration, and safety system")
+System_Ext(external, "Media Storage Provider", "Stores authorized Profile image variants")
+
+Rel(actor, system, "Uses for present a trustworthy Profile", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

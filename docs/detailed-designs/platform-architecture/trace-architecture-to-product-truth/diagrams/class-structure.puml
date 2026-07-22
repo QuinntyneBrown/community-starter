@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Make architecture traceable to product truth
+
+class TraceArchitectureToProductTruthRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class TraceArchitectureToProductTruthDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class TraceArchitectureToProductTruthRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: TraceArchitectureToProductTruthDecision): void
+}
+
+interface ITraceArchitectureToProductTruthRepository {
+  +Load(subjectId: string): Task<TraceArchitectureToProductTruthRecord>
+  +Commit(record: TraceArchitectureToProductTruthRecord, expectedVersion: long): Task<bool>
+}
+
+class TraceArchitectureToProductTruthPolicy {
+  +Evaluate(record: TraceArchitectureToProductTruthRecord, request: TraceArchitectureToProductTruthRequest): TraceArchitectureToProductTruthDecision
+  +VocabularyInvariantsAndVerticalSlicesDriveImplementation(record: TraceArchitectureToProductTruthRecord, request: TraceArchitectureToProductTruthRequest): TraceArchitectureToProductTruthDecision
+  +ConsequentialDecisionsAndDocumentationRemainTraceable(record: TraceArchitectureToProductTruthRecord, request: TraceArchitectureToProductTruthRequest): TraceArchitectureToProductTruthDecision
+}
+
+class TraceArchitectureToProductTruthHandler {
+  +Handle(request: TraceArchitectureToProductTruthRequest): Task<TraceArchitectureToProductTruthDecision>
+}
+
+class TraceArchitectureToProductTruthProjector {
+  +Project(decision: TraceArchitectureToProductTruthDecision): Task<void>
+}
+
+TraceArchitectureToProductTruthHandler ..> TraceArchitectureToProductTruthRequest : handles
+TraceArchitectureToProductTruthHandler ..> TraceArchitectureToProductTruthPolicy : evaluates with
+TraceArchitectureToProductTruthHandler --> ITraceArchitectureToProductTruthRepository : loads / commits
+ITraceArchitectureToProductTruthRepository --> TraceArchitectureToProductTruthRecord : persists
+TraceArchitectureToProductTruthPolicy ..> TraceArchitectureToProductTruthRecord : inspects
+TraceArchitectureToProductTruthPolicy --> TraceArchitectureToProductTruthDecision : produces
+TraceArchitectureToProductTruthRecord ..> TraceArchitectureToProductTruthDecision : applies accepted
+TraceArchitectureToProductTruthProjector ..> TraceArchitectureToProductTruthDecision : consumes committed
+@enduml

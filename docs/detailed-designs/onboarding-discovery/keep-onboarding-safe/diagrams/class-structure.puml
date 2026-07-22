@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Keep onboarding safe and inclusive
+
+class KeepOnboardingSafeRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class KeepOnboardingSafeDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class KeepOnboardingSafeRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: KeepOnboardingSafeDecision): void
+}
+
+interface IKeepOnboardingSafeRepository {
+  +Load(subjectId: string): Task<KeepOnboardingSafeRecord>
+  +Commit(record: KeepOnboardingSafeRecord, expectedVersion: long): Task<bool>
+}
+
+class KeepOnboardingSafePolicy {
+  +Evaluate(record: KeepOnboardingSafeRecord, request: KeepOnboardingSafeRequest): KeepOnboardingSafeDecision
+  +RecordEligibilityAndConsent(record: KeepOnboardingSafeRecord, request: KeepOnboardingSafeRequest): KeepOnboardingSafeDecision
+  +ExcludeUnsafeCommunitySuggestions(record: KeepOnboardingSafeRecord, request: KeepOnboardingSafeRequest): KeepOnboardingSafeDecision
+  +RecoverFromEmptyAndErrorStates(record: KeepOnboardingSafeRecord, request: KeepOnboardingSafeRequest): KeepOnboardingSafeDecision
+}
+
+class KeepOnboardingSafeHandler {
+  +Handle(request: KeepOnboardingSafeRequest): Task<KeepOnboardingSafeDecision>
+}
+
+class KeepOnboardingSafeProjector {
+  +Project(decision: KeepOnboardingSafeDecision): Task<void>
+}
+
+KeepOnboardingSafeHandler ..> KeepOnboardingSafeRequest : handles
+KeepOnboardingSafeHandler ..> KeepOnboardingSafePolicy : evaluates with
+KeepOnboardingSafeHandler --> IKeepOnboardingSafeRepository : loads / commits
+IKeepOnboardingSafeRepository --> KeepOnboardingSafeRecord : persists
+KeepOnboardingSafePolicy ..> KeepOnboardingSafeRecord : inspects
+KeepOnboardingSafePolicy --> KeepOnboardingSafeDecision : produces
+KeepOnboardingSafeRecord ..> KeepOnboardingSafeDecision : applies accepted
+KeepOnboardingSafeProjector ..> KeepOnboardingSafeDecision : consumes committed
+@enduml

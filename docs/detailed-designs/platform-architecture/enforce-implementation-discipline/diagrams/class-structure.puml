@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Enforce production-grade implementation discipline
+
+class EnforceImplementationDisciplineRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class EnforceImplementationDisciplineDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class EnforceImplementationDisciplineRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: EnforceImplementationDisciplineDecision): void
+}
+
+interface IEnforceImplementationDisciplineRepository {
+  +Load(subjectId: string): Task<EnforceImplementationDisciplineRecord>
+  +Commit(record: EnforceImplementationDisciplineRecord, expectedVersion: long): Task<bool>
+}
+
+class EnforceImplementationDisciplinePolicy {
+  +Evaluate(record: EnforceImplementationDisciplineRecord, request: EnforceImplementationDisciplineRequest): EnforceImplementationDisciplineDecision
+  +CSharpCodeIsNullableSafeAsynchronousAndConventionEnforced(record: EnforceImplementationDisciplineRecord, request: EnforceImplementationDisciplineRequest): EnforceImplementationDisciplineDecision
+  +ConfigurationCompositionHealthAndDependenciesAreGoverned(record: EnforceImplementationDisciplineRecord, request: EnforceImplementationDisciplineRequest): EnforceImplementationDisciplineDecision
+  +UntrustedAndExternalWorkIsBoundedBehindUsefulSeams(record: EnforceImplementationDisciplineRecord, request: EnforceImplementationDisciplineRequest): EnforceImplementationDisciplineDecision
+}
+
+class EnforceImplementationDisciplineHandler {
+  +Handle(request: EnforceImplementationDisciplineRequest): Task<EnforceImplementationDisciplineDecision>
+}
+
+class EnforceImplementationDisciplineProjector {
+  +Project(decision: EnforceImplementationDisciplineDecision): Task<void>
+}
+
+EnforceImplementationDisciplineHandler ..> EnforceImplementationDisciplineRequest : handles
+EnforceImplementationDisciplineHandler ..> EnforceImplementationDisciplinePolicy : evaluates with
+EnforceImplementationDisciplineHandler --> IEnforceImplementationDisciplineRepository : loads / commits
+IEnforceImplementationDisciplineRepository --> EnforceImplementationDisciplineRecord : persists
+EnforceImplementationDisciplinePolicy ..> EnforceImplementationDisciplineRecord : inspects
+EnforceImplementationDisciplinePolicy --> EnforceImplementationDisciplineDecision : produces
+EnforceImplementationDisciplineRecord ..> EnforceImplementationDisciplineDecision : applies accepted
+EnforceImplementationDisciplineProjector ..> EnforceImplementationDisciplineDecision : consumes committed
+@enduml

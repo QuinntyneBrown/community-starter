@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Reliability and capacity are measurable
+
+class MeasureReliabilityCapacityRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class MeasureReliabilityCapacityDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class MeasureReliabilityCapacityRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: MeasureReliabilityCapacityDecision): void
+}
+
+interface IMeasureReliabilityCapacityRepository {
+  +Load(subjectId: string): Task<MeasureReliabilityCapacityRecord>
+  +Commit(record: MeasureReliabilityCapacityRecord, expectedVersion: long): Task<bool>
+}
+
+class MeasureReliabilityCapacityPolicy {
+  +Evaluate(record: MeasureReliabilityCapacityRecord, request: MeasureReliabilityCapacityRequest): MeasureReliabilityCapacityDecision
+  +DefineAndReportServiceObjectives(record: MeasureReliabilityCapacityRecord, request: MeasureReliabilityCapacityRequest): MeasureReliabilityCapacityDecision
+  +EnforcePerformanceAndResourceBudgets(record: MeasureReliabilityCapacityRecord, request: MeasureReliabilityCapacityRequest): MeasureReliabilityCapacityDecision
+  +DegradeSafelyDuringDependencyFailure(record: MeasureReliabilityCapacityRecord, request: MeasureReliabilityCapacityRequest): MeasureReliabilityCapacityDecision
+}
+
+class MeasureReliabilityCapacityHandler {
+  +Handle(request: MeasureReliabilityCapacityRequest): Task<MeasureReliabilityCapacityDecision>
+}
+
+class MeasureReliabilityCapacityProjector {
+  +Project(decision: MeasureReliabilityCapacityDecision): Task<void>
+}
+
+MeasureReliabilityCapacityHandler ..> MeasureReliabilityCapacityRequest : handles
+MeasureReliabilityCapacityHandler ..> MeasureReliabilityCapacityPolicy : evaluates with
+MeasureReliabilityCapacityHandler --> IMeasureReliabilityCapacityRepository : loads / commits
+IMeasureReliabilityCapacityRepository --> MeasureReliabilityCapacityRecord : persists
+MeasureReliabilityCapacityPolicy ..> MeasureReliabilityCapacityRecord : inspects
+MeasureReliabilityCapacityPolicy --> MeasureReliabilityCapacityDecision : produces
+MeasureReliabilityCapacityRecord ..> MeasureReliabilityCapacityDecision : applies accepted
+MeasureReliabilityCapacityProjector ..> MeasureReliabilityCapacityDecision : consumes committed
+@enduml

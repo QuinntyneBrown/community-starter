@@ -1,0 +1,59 @@
+@startuml
+title UML sequence behaviour — Pull requests and handoffs expose impact and verification
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Delivery Engineer" as actor
+box "Frontend — Engineering Workbench" #E0F2FE
+  participant "KeepDeliveryClaimsHonestSurface" as surface
+  participant "KeepDeliveryClaimsHonestClient" as client
+end box
+box "Backend — Delivery Control Plane" #D1FADF
+  participant "KeepDeliveryClaimsHonestEndpoint" as endpoint
+end box
+box "Backend — Delivery Policy and Evidence" #ECFDF3
+  participant "KeepDeliveryClaimsHonestHandler" as handler
+  participant "KeepDeliveryClaimsHonestPolicy" as policy
+end box
+box "Backend — Build and Artifact Infrastructure" #FFF4E5
+  database "Evidence Registry" as store
+  participant "KeepDeliveryClaimsHonestProjector" as projector
+end box
+
+actor -> surface : Start pull requests and handoffs expose impact and verification
+surface -> client : Build typed request
+client -> endpoint : Submit request
+endpoint -> endpoint : Authenticate and apply boundary policy
+endpoint -> handler : Send KeepDeliveryClaimsHonestRequest
+handler -> store : Load current scoped state
+store --> handler : Current state and version
+handler -> policy : Enforce L2-QUAL-018 — pull requests and handoffs expose impact and verification
+policy --> handler : Typed decision
+alt Decision is accepted
+  opt Requirement changes authoritative state
+    handler -> store : Commit state and outcome conditionally
+    store --> handler : Commit result
+  end
+  opt Committed outcome has derived effects
+    handler -> projector : Publish committed outcome
+    projector --> handler : Accepted for idempotent processing
+  end
+  handler --> endpoint : Accepted feature result
+else Decision is rejected or stale
+  handler --> endpoint : Safe validation, denial, or conflict result
+end
+endpoint --> client : Typed response
+client --> surface : Reconciled feature result
+surface --> actor : Present current outcome
+@enduml

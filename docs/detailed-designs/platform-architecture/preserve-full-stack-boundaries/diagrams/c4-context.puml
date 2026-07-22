@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Preserve explicit full-stack boundaries
+
+Person(actor, "Product Engineer", "Implements and verifies full-stack feature slices")
+System(system, "Community Starter Delivery System", "Build, verification, promotion, and engineering evidence system")
+System_Ext(external, "Package and Deployment Providers", "Toolchain, package, artifact, and environment services")
+
+Rel(actor, system, "Uses for preserve explicit full-stack boundaries", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

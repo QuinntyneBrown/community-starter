@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Govern Post lifecycle
+
+class GovernPostLifecycleRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class GovernPostLifecycleDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class GovernPostLifecycleRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: GovernPostLifecycleDecision): void
+}
+
+interface IGovernPostLifecycleRepository {
+  +Load(subjectId: string): Task<GovernPostLifecycleRecord>
+  +Commit(record: GovernPostLifecycleRecord, expectedVersion: long): Task<bool>
+}
+
+class GovernPostLifecyclePolicy {
+  +Evaluate(record: GovernPostLifecycleRecord, request: GovernPostLifecycleRequest): GovernPostLifecycleDecision
+  +DraftAndPublishAPost(record: GovernPostLifecycleRecord, request: GovernPostLifecycleRequest): GovernPostLifecycleDecision
+  +EditAPostSafely(record: GovernPostLifecycleRecord, request: GovernPostLifecycleRequest): GovernPostLifecycleDecision
+  +EnforcePostVisibility(record: GovernPostLifecycleRecord, request: GovernPostLifecycleRequest): GovernPostLifecycleDecision
+  +RemoveAndRestoreAPost(record: GovernPostLifecycleRecord, request: GovernPostLifecycleRequest): GovernPostLifecycleDecision
+}
+
+class GovernPostLifecycleHandler {
+  +Handle(request: GovernPostLifecycleRequest): Task<GovernPostLifecycleDecision>
+}
+
+class GovernPostLifecycleProjector {
+  +Project(decision: GovernPostLifecycleDecision): Task<void>
+}
+
+GovernPostLifecycleHandler ..> GovernPostLifecycleRequest : handles
+GovernPostLifecycleHandler ..> GovernPostLifecyclePolicy : evaluates with
+GovernPostLifecycleHandler --> IGovernPostLifecycleRepository : loads / commits
+IGovernPostLifecycleRepository --> GovernPostLifecycleRecord : persists
+GovernPostLifecyclePolicy ..> GovernPostLifecycleRecord : inspects
+GovernPostLifecyclePolicy --> GovernPostLifecycleDecision : produces
+GovernPostLifecycleRecord ..> GovernPostLifecycleDecision : applies accepted
+GovernPostLifecycleProjector ..> GovernPostLifecycleDecision : consumes committed
+@enduml

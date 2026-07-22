@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Keep tests deterministic, readable, and traceable
+
+class KeepTestsDeterministicRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class KeepTestsDeterministicDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class KeepTestsDeterministicRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: KeepTestsDeterministicDecision): void
+}
+
+interface IKeepTestsDeterministicRepository {
+  +Load(subjectId: string): Task<KeepTestsDeterministicRecord>
+  +Commit(record: KeepTestsDeterministicRecord, expectedVersion: long): Task<bool>
+}
+
+class KeepTestsDeterministicPolicy {
+  +Evaluate(record: KeepTestsDeterministicRecord, request: KeepTestsDeterministicRequest): KeepTestsDeterministicDecision
+  +TestsAreBehavioralIsolatedAndDeterministic(record: KeepTestsDeterministicRecord, request: KeepTestsDeterministicRequest): KeepTestsDeterministicDecision
+  +BrowserJourneysUseStablePageObjectsAndFaithfulDependencies(record: KeepTestsDeterministicRecord, request: KeepTestsDeterministicRequest): KeepTestsDeterministicDecision
+  +RequirementStatusIsBackedByAppropriatelyScopedEvidence(record: KeepTestsDeterministicRecord, request: KeepTestsDeterministicRequest): KeepTestsDeterministicDecision
+}
+
+class KeepTestsDeterministicHandler {
+  +Handle(request: KeepTestsDeterministicRequest): Task<KeepTestsDeterministicDecision>
+}
+
+class KeepTestsDeterministicProjector {
+  +Project(decision: KeepTestsDeterministicDecision): Task<void>
+}
+
+KeepTestsDeterministicHandler ..> KeepTestsDeterministicRequest : handles
+KeepTestsDeterministicHandler ..> KeepTestsDeterministicPolicy : evaluates with
+KeepTestsDeterministicHandler --> IKeepTestsDeterministicRepository : loads / commits
+IKeepTestsDeterministicRepository --> KeepTestsDeterministicRecord : persists
+KeepTestsDeterministicPolicy ..> KeepTestsDeterministicRecord : inspects
+KeepTestsDeterministicPolicy --> KeepTestsDeterministicDecision : produces
+KeepTestsDeterministicRecord ..> KeepTestsDeterministicDecision : applies accepted
+KeepTestsDeterministicProjector ..> KeepTestsDeterministicDecision : consumes committed
+@enduml

@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Bounded Community administration
+
+class AdministerCommunitySettingsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class AdministerCommunitySettingsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class AdministerCommunitySettingsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: AdministerCommunitySettingsDecision): void
+}
+
+interface IAdministerCommunitySettingsRepository {
+  +Load(subjectId: string): Task<AdministerCommunitySettingsRecord>
+  +Commit(record: AdministerCommunitySettingsRecord, expectedVersion: long): Task<bool>
+}
+
+class AdministerCommunitySettingsPolicy {
+  +Evaluate(record: AdministerCommunitySettingsRecord, request: AdministerCommunitySettingsRequest): AdministerCommunitySettingsDecision
+  +ChangeVersionedCommunitySettings(record: AdministerCommunitySettingsRecord, request: AdministerCommunitySettingsRequest): AdministerCommunitySettingsDecision
+  +DelegateRolesWithoutPrivilegeEscalation(record: AdministerCommunitySettingsRecord, request: AdministerCommunitySettingsRequest): AdministerCommunitySettingsDecision
+  +PreviewAndExecuteHighImpactOperations(record: AdministerCommunitySettingsRecord, request: AdministerCommunitySettingsRequest): AdministerCommunitySettingsDecision
+}
+
+class AdministerCommunitySettingsHandler {
+  +Handle(request: AdministerCommunitySettingsRequest): Task<AdministerCommunitySettingsDecision>
+}
+
+class AdministerCommunitySettingsProjector {
+  +Project(decision: AdministerCommunitySettingsDecision): Task<void>
+}
+
+AdministerCommunitySettingsHandler ..> AdministerCommunitySettingsRequest : handles
+AdministerCommunitySettingsHandler ..> AdministerCommunitySettingsPolicy : evaluates with
+AdministerCommunitySettingsHandler --> IAdministerCommunitySettingsRepository : loads / commits
+IAdministerCommunitySettingsRepository --> AdministerCommunitySettingsRecord : persists
+AdministerCommunitySettingsPolicy ..> AdministerCommunitySettingsRecord : inspects
+AdministerCommunitySettingsPolicy --> AdministerCommunitySettingsDecision : produces
+AdministerCommunitySettingsRecord ..> AdministerCommunitySettingsDecision : applies accepted
+AdministerCommunitySettingsProjector ..> AdministerCommunitySettingsDecision : consumes committed
+@enduml

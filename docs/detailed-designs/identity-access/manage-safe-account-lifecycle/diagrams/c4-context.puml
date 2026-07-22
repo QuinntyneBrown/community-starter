@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Safe Account lifecycle
+
+Person(actor, "Account Holder", "Establishes identity and requests protected actions")
+System(system, "Community Platform", "Community participation, administration, and safety system")
+System_Ext(external, "Identity and Email Providers", "Performs configured identity proof and delivers private actions")
+
+Rel(actor, system, "Uses for safe Account lifecycle", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

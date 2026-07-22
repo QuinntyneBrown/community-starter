@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Model threats and enforce identity in Community context
+
+class ModelThreatsAndIdentityRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ModelThreatsAndIdentityDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ModelThreatsAndIdentityRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ModelThreatsAndIdentityDecision): void
+}
+
+interface IModelThreatsAndIdentityRepository {
+  +Load(subjectId: string): Task<ModelThreatsAndIdentityRecord>
+  +Commit(record: ModelThreatsAndIdentityRecord, expectedVersion: long): Task<bool>
+}
+
+class ModelThreatsAndIdentityPolicy {
+  +Evaluate(record: ModelThreatsAndIdentityRecord, request: ModelThreatsAndIdentityRequest): ModelThreatsAndIdentityDecision
+  +HighRiskCommunityFlowsHaveMaintainedThreatModels(record: ModelThreatsAndIdentityRecord, request: ModelThreatsAndIdentityRequest): ModelThreatsAndIdentityDecision
+  +ProductionIdentityAndSessionBehaviorCannotInheritDevelopmentShortcuts(record: ModelThreatsAndIdentityRecord, request: ModelThreatsAndIdentityRequest): ModelThreatsAndIdentityDecision
+  +EveryProtectedResourceIsAuthorizedInCommunityContext(record: ModelThreatsAndIdentityRecord, request: ModelThreatsAndIdentityRequest): ModelThreatsAndIdentityDecision
+}
+
+class ModelThreatsAndIdentityHandler {
+  +Handle(request: ModelThreatsAndIdentityRequest): Task<ModelThreatsAndIdentityDecision>
+}
+
+class ModelThreatsAndIdentityProjector {
+  +Project(decision: ModelThreatsAndIdentityDecision): Task<void>
+}
+
+ModelThreatsAndIdentityHandler ..> ModelThreatsAndIdentityRequest : handles
+ModelThreatsAndIdentityHandler ..> ModelThreatsAndIdentityPolicy : evaluates with
+ModelThreatsAndIdentityHandler --> IModelThreatsAndIdentityRepository : loads / commits
+IModelThreatsAndIdentityRepository --> ModelThreatsAndIdentityRecord : persists
+ModelThreatsAndIdentityPolicy ..> ModelThreatsAndIdentityRecord : inspects
+ModelThreatsAndIdentityPolicy --> ModelThreatsAndIdentityDecision : produces
+ModelThreatsAndIdentityRecord ..> ModelThreatsAndIdentityDecision : applies accepted
+ModelThreatsAndIdentityProjector ..> ModelThreatsAndIdentityDecision : consumes committed
+@enduml

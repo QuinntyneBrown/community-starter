@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Make local development and change hygiene reproducible
+
+class ReproduceLocalChangeHygieneRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ReproduceLocalChangeHygieneDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ReproduceLocalChangeHygieneRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ReproduceLocalChangeHygieneDecision): void
+}
+
+interface IReproduceLocalChangeHygieneRepository {
+  +Load(subjectId: string): Task<ReproduceLocalChangeHygieneRecord>
+  +Commit(record: ReproduceLocalChangeHygieneRecord, expectedVersion: long): Task<bool>
+}
+
+class ReproduceLocalChangeHygienePolicy {
+  +Evaluate(record: ReproduceLocalChangeHygieneRecord, request: ReproduceLocalChangeHygieneRequest): ReproduceLocalChangeHygieneDecision
+  +CanonicalRestoreBuildTestAndE2eCommandsWorkCleanly(record: ReproduceLocalChangeHygieneRecord, request: ReproduceLocalChangeHygieneRequest): ReproduceLocalChangeHygieneDecision
+  +RepositoryFormattingAndTrackedArtifactsAreGoverned(record: ReproduceLocalChangeHygieneRecord, request: ReproduceLocalChangeHygieneRequest): ReproduceLocalChangeHygieneDecision
+  +IterationStartsNarrowAndEndsWithEveryRequiredGate(record: ReproduceLocalChangeHygieneRecord, request: ReproduceLocalChangeHygieneRequest): ReproduceLocalChangeHygieneDecision
+  +DatabaseMarketingDeploymentAndDocumentationChangesHaveSpecializedChecks(record: ReproduceLocalChangeHygieneRecord, request: ReproduceLocalChangeHygieneRequest): ReproduceLocalChangeHygieneDecision
+}
+
+class ReproduceLocalChangeHygieneHandler {
+  +Handle(request: ReproduceLocalChangeHygieneRequest): Task<ReproduceLocalChangeHygieneDecision>
+}
+
+class ReproduceLocalChangeHygieneProjector {
+  +Project(decision: ReproduceLocalChangeHygieneDecision): Task<void>
+}
+
+ReproduceLocalChangeHygieneHandler ..> ReproduceLocalChangeHygieneRequest : handles
+ReproduceLocalChangeHygieneHandler ..> ReproduceLocalChangeHygienePolicy : evaluates with
+ReproduceLocalChangeHygieneHandler --> IReproduceLocalChangeHygieneRepository : loads / commits
+IReproduceLocalChangeHygieneRepository --> ReproduceLocalChangeHygieneRecord : persists
+ReproduceLocalChangeHygienePolicy ..> ReproduceLocalChangeHygieneRecord : inspects
+ReproduceLocalChangeHygienePolicy --> ReproduceLocalChangeHygieneDecision : produces
+ReproduceLocalChangeHygieneRecord ..> ReproduceLocalChangeHygieneDecision : applies accepted
+ReproduceLocalChangeHygieneProjector ..> ReproduceLocalChangeHygieneDecision : consumes committed
+@enduml

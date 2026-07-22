@@ -1,0 +1,65 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Defensible authenticated sessions
+
+class ProtectAuthenticatedSessionsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ProtectAuthenticatedSessionsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ProtectAuthenticatedSessionsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ProtectAuthenticatedSessionsDecision): void
+}
+
+interface IProtectAuthenticatedSessionsRepository {
+  +Load(subjectId: string): Task<ProtectAuthenticatedSessionsRecord>
+  +Commit(record: ProtectAuthenticatedSessionsRecord, expectedVersion: long): Task<bool>
+}
+
+class ProtectAuthenticatedSessionsPolicy {
+  +Evaluate(record: ProtectAuthenticatedSessionsRecord, request: ProtectAuthenticatedSessionsRequest): ProtectAuthenticatedSessionsDecision
+  +SignInWithoutEnumeration(record: ProtectAuthenticatedSessionsRecord, request: ProtectAuthenticatedSessionsRequest): ProtectAuthenticatedSessionsDecision
+  +RequireStrongerVerification(record: ProtectAuthenticatedSessionsRecord, request: ProtectAuthenticatedSessionsRequest): ProtectAuthenticatedSessionsDecision
+  +RotateAndRevokeSessions(record: ProtectAuthenticatedSessionsRecord, request: ProtectAuthenticatedSessionsRequest): ProtectAuthenticatedSessionsDecision
+  +IssueRestrictedRemediationSessions(record: ProtectAuthenticatedSessionsRecord, request: ProtectAuthenticatedSessionsRequest): ProtectAuthenticatedSessionsDecision
+  +GovernStrongerFactorLifecycle(record: ProtectAuthenticatedSessionsRecord, request: ProtectAuthenticatedSessionsRequest): ProtectAuthenticatedSessionsDecision
+}
+
+class ProtectAuthenticatedSessionsHandler {
+  +Handle(request: ProtectAuthenticatedSessionsRequest): Task<ProtectAuthenticatedSessionsDecision>
+}
+
+class ProtectAuthenticatedSessionsProjector {
+  +Project(decision: ProtectAuthenticatedSessionsDecision): Task<void>
+}
+
+ProtectAuthenticatedSessionsHandler ..> ProtectAuthenticatedSessionsRequest : handles
+ProtectAuthenticatedSessionsHandler ..> ProtectAuthenticatedSessionsPolicy : evaluates with
+ProtectAuthenticatedSessionsHandler --> IProtectAuthenticatedSessionsRepository : loads / commits
+IProtectAuthenticatedSessionsRepository --> ProtectAuthenticatedSessionsRecord : persists
+ProtectAuthenticatedSessionsPolicy ..> ProtectAuthenticatedSessionsRecord : inspects
+ProtectAuthenticatedSessionsPolicy --> ProtectAuthenticatedSessionsDecision : produces
+ProtectAuthenticatedSessionsRecord ..> ProtectAuthenticatedSessionsDecision : applies accepted
+ProtectAuthenticatedSessionsProjector ..> ProtectAuthenticatedSessionsDecision : consumes committed
+@enduml

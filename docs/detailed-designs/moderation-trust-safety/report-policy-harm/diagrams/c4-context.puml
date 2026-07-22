@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Safe policy reporting
+
+Person(actor, "Moderator", "Reviews Reports and applies bounded safety decisions")
+System(system, "Community Platform", "Community participation, administration, and safety system")
+System_Ext(external, "Notification and Evidence Providers", "Delivers notices and stores restricted evidence")
+
+Rel(actor, system, "Uses for safe policy reporting", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

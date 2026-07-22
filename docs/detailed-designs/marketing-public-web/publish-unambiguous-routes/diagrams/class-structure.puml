@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Publish marketing and application routes without ambiguity
+
+class PublishUnambiguousRoutesRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class PublishUnambiguousRoutesDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class PublishUnambiguousRoutesRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: PublishUnambiguousRoutesDecision): void
+}
+
+interface IPublishUnambiguousRoutesRepository {
+  +Load(subjectId: string): Task<PublishUnambiguousRoutesRecord>
+  +Commit(record: PublishUnambiguousRoutesRecord, expectedVersion: long): Task<bool>
+}
+
+class PublishUnambiguousRoutesPolicy {
+  +Evaluate(record: PublishUnambiguousRoutesRecord, request: PublishUnambiguousRoutesRequest): PublishUnambiguousRoutesDecision
+  +OneOriginPublishingAssemblesDeterministicAssets(record: PublishUnambiguousRoutesRecord, request: PublishUnambiguousRoutesRequest): PublishUnambiguousRoutesDecision
+  +RequestRoutingProtectsEveryRuntimeOwner(record: PublishUnambiguousRoutesRecord, request: PublishUnambiguousRoutesRequest): PublishUnambiguousRoutesDecision
+  +PublicToApplicationNavigationIsDeploymentConfigurable(record: PublishUnambiguousRoutesRecord, request: PublishUnambiguousRoutesRequest): PublishUnambiguousRoutesDecision
+}
+
+class PublishUnambiguousRoutesHandler {
+  +Handle(request: PublishUnambiguousRoutesRequest): Task<PublishUnambiguousRoutesDecision>
+}
+
+class PublishUnambiguousRoutesProjector {
+  +Project(decision: PublishUnambiguousRoutesDecision): Task<void>
+}
+
+PublishUnambiguousRoutesHandler ..> PublishUnambiguousRoutesRequest : handles
+PublishUnambiguousRoutesHandler ..> PublishUnambiguousRoutesPolicy : evaluates with
+PublishUnambiguousRoutesHandler --> IPublishUnambiguousRoutesRepository : loads / commits
+IPublishUnambiguousRoutesRepository --> PublishUnambiguousRoutesRecord : persists
+PublishUnambiguousRoutesPolicy ..> PublishUnambiguousRoutesRecord : inspects
+PublishUnambiguousRoutesPolicy --> PublishUnambiguousRoutesDecision : produces
+PublishUnambiguousRoutesRecord ..> PublishUnambiguousRoutesDecision : applies accepted
+PublishUnambiguousRoutesProjector ..> PublishUnambiguousRoutesDecision : consumes committed
+@enduml

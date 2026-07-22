@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Personal data use is explicit and minimized
+
+class MinimizePersonalDataUseRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class MinimizePersonalDataUseDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class MinimizePersonalDataUseRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: MinimizePersonalDataUseDecision): void
+}
+
+interface IMinimizePersonalDataUseRepository {
+  +Load(subjectId: string): Task<MinimizePersonalDataUseRecord>
+  +Commit(record: MinimizePersonalDataUseRecord, expectedVersion: long): Task<bool>
+}
+
+class MinimizePersonalDataUsePolicy {
+  +Evaluate(record: MinimizePersonalDataUseRecord, request: MinimizePersonalDataUseRequest): MinimizePersonalDataUseDecision
+  +MaintainAPersonalDataInventory(record: MinimizePersonalDataUseRecord, request: MinimizePersonalDataUseRequest): MinimizePersonalDataUseDecision
+  +ObtainAndHonorOptionalProcessingChoices(record: MinimizePersonalDataUseRecord, request: MinimizePersonalDataUseRequest): MinimizePersonalDataUseDecision
+  +ApplyPrivacyPreservingDefaults(record: MinimizePersonalDataUseRecord, request: MinimizePersonalDataUseRequest): MinimizePersonalDataUseDecision
+}
+
+class MinimizePersonalDataUseHandler {
+  +Handle(request: MinimizePersonalDataUseRequest): Task<MinimizePersonalDataUseDecision>
+}
+
+class MinimizePersonalDataUseProjector {
+  +Project(decision: MinimizePersonalDataUseDecision): Task<void>
+}
+
+MinimizePersonalDataUseHandler ..> MinimizePersonalDataUseRequest : handles
+MinimizePersonalDataUseHandler ..> MinimizePersonalDataUsePolicy : evaluates with
+MinimizePersonalDataUseHandler --> IMinimizePersonalDataUseRepository : loads / commits
+IMinimizePersonalDataUseRepository --> MinimizePersonalDataUseRecord : persists
+MinimizePersonalDataUsePolicy ..> MinimizePersonalDataUseRecord : inspects
+MinimizePersonalDataUsePolicy --> MinimizePersonalDataUseDecision : produces
+MinimizePersonalDataUseRecord ..> MinimizePersonalDataUseDecision : applies accepted
+MinimizePersonalDataUseProjector ..> MinimizePersonalDataUseDecision : consumes committed
+@enduml

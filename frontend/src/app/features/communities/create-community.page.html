@@ -1,0 +1,34 @@
+<section class="cs-page">
+  <header class="cs-page__header">
+    <p class="cs-eyebrow">Create a community</p>
+    <h1>Give people a clear place to gather.</h1>
+    <p>You become the first owner so the community always begins with accountable authority.</p>
+  </header>
+  <form class="cs-card cs-form cs-stack" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (problem()) {
+      <div class="cs-error" role="alert">{{ problem()?.title }}</div>
+    }
+    <div class="cs-field">
+      <label for="community-name">Name</label>
+      <input id="community-name" formControlName="name" autocomplete="organization" />
+    </div>
+    <div class="cs-field">
+      <label for="community-slug">Address</label>
+      <div class="slug-field">
+        <span>community.local/</span
+        ><input id="community-slug" formControlName="slug" aria-describedby="slug-help" />
+      </div>
+      <small id="slug-help">Use lowercase letters, numbers, and hyphens.</small>
+    </div>
+    <div class="cs-field">
+      <label for="community-description">Purpose</label>
+      <textarea id="community-description" formControlName="description" rows="6"></textarea>
+    </div>
+    <div class="cs-cluster">
+      <button class="cs-button" type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Creating…' : 'Create community' }}
+      </button>
+      <a routerLink="/home">Cancel</a>
+    </div>
+  </form>
+</section>

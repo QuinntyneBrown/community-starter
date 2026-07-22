@@ -1,0 +1,23 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components — Coordinated and safe participation
+
+Container(frontend, "Member Web Application", "Angular", "Presents state and sends typed intent")
+Container_Boundary(backend, "Community API") {
+  Component(endpoint, "CoordinateSafeParticipationEndpoint", "HTTP endpoint", "Authenticates and dispatches feature requests")
+  Component(handler, "CoordinateSafeParticipationHandler", "Application service", "Coordinates authorized state and one unit of work")
+  Component(policy, "CoordinateSafeParticipationPolicy", "Domain policy", "Evaluates traced behavior against current state")
+  Component(repository, "ICoordinateSafeParticipationRepository", "Persistence port", "Loads scoped state and commits conditionally")
+  Component(projector, "CoordinateSafeParticipationProjector", "Post-commit component", "Processes committed outcomes idempotently")
+  ComponentDb(store, "Community Database", "Relational database", "Stores state, versions, outcomes, and checkpoints")
+}
+
+Rel(frontend, endpoint, "Submits CoordinateSafeParticipationRequest", "Typed contract")
+Rel(endpoint, handler, "Dispatches request")
+Rel(handler, policy, "Evaluates current state")
+Rel(handler, repository, "Loads and commits")
+Rel(repository, store, "Reads and writes", "Transactional adapter")
+Rel(handler, projector, "Publishes committed outcome", "Durable handoff")
+Rel(projector, store, "Checkpoints processing", "Idempotent adapter")
+@enduml

@@ -1,0 +1,76 @@
+:root {
+  color-scheme: light;
+
+  --cs-color-ink: #16160c;
+  --cs-color-canvas: #f8f6f1;
+  --cs-color-surface: #ffffff;
+  --cs-color-surface-muted: #e4e0d8;
+  --cs-color-surface-strong: #cbc6bb;
+  --cs-color-accent: #c6fb50;
+  --cs-color-accent-hover: #a9df31;
+  --cs-color-sky: #8adfff;
+  --cs-color-blue: #176f91;
+  --cs-color-yellow: #fff737;
+  --cs-color-orange: #c83d1b;
+  --cs-color-success: #176b2c;
+  --cs-color-warning: #825500;
+  --cs-color-danger: #a32222;
+  --cs-color-info: #075985;
+
+  --cs-surface-page: var(--cs-color-canvas);
+  --cs-surface-card: var(--cs-color-surface);
+  --cs-surface-subtle: var(--cs-color-surface-muted);
+  --cs-text-primary: var(--cs-color-ink);
+  --cs-text-muted: #55554d;
+  --cs-border-default: #aaa69c;
+  --cs-action-primary: var(--cs-color-accent);
+  --cs-action-primary-hover: var(--cs-color-accent-hover);
+  --cs-focus-ring: #005fcc;
+  --cs-status-success: var(--cs-color-success);
+  --cs-status-warning: var(--cs-color-warning);
+  --cs-status-danger: var(--cs-color-danger);
+  --cs-status-info: var(--cs-color-info);
+
+  --cs-font-heading: "Archivo", "Arial Narrow", Arial, sans-serif;
+  --cs-font-body: "Inter", Arial, sans-serif;
+  --cs-font-accent: "Fraunces", Georgia, serif;
+
+  --cs-step--1: clamp(0.82rem, 0.78rem + 0.16vw, 0.92rem);
+  --cs-step-0: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --cs-step-1: clamp(1.25rem, 1.12rem + 0.65vw, 1.65rem);
+  --cs-step-2: clamp(1.65rem, 1.35rem + 1.5vw, 2.5rem);
+  --cs-step-3: clamp(2.25rem, 1.55rem + 3.5vw, 4.5rem);
+  --cs-step-display: clamp(3rem, 1.6rem + 7vw, 7.5rem);
+
+  --cs-space-1: 0.25rem;
+  --cs-space-2: 0.5rem;
+  --cs-space-3: 0.75rem;
+  --cs-space-4: 1rem;
+  --cs-space-5: 1.5rem;
+  --cs-space-6: 2rem;
+  --cs-space-7: 3rem;
+  --cs-space-8: 4rem;
+  --cs-space-9: 6rem;
+
+  --cs-radius-sm: 0.25rem;
+  --cs-radius-md: 0.5rem;
+  --cs-radius-lg: 1rem;
+  --cs-radius-round: 999rem;
+  --cs-border-width: 0.094rem;
+  --cs-shadow-card: 0 0.5rem 1.5rem rgb(22 22 12 / 10%);
+  --cs-content-wide: 90rem;
+  --cs-content-reading: 44rem;
+  --cs-control-height: 2.75rem;
+  --cs-motion-fast: 120ms;
+  --cs-motion-normal: 220ms;
+  --cs-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --cs-z-nav: 20;
+  --cs-z-dialog: 100;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cs-motion-fast: 1ms;
+    --cs-motion-normal: 1ms;
+  }
+}

@@ -1,0 +1,76 @@
+.app-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--cs-z-nav);
+  min-height: 4.75rem;
+  padding-inline: max(var(--cs-space-4), calc((100% - var(--cs-content-wide)) / 2));
+  display: flex;
+  align-items: center;
+  gap: var(--cs-space-5);
+  border-bottom: var(--cs-border-width) solid var(--cs-border-default);
+  background: color-mix(in srgb, var(--cs-surface-page) 92%, transparent);
+  backdrop-filter: blur(1rem);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cs-space-3);
+  font-family: var(--cs-font-heading);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand__mark {
+  width: 2.5rem;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: var(--cs-radius-md);
+  color: var(--cs-color-accent);
+  background: var(--cs-color-ink);
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: var(--cs-space-4);
+}
+
+nav a {
+  text-decoration: none;
+}
+
+nav a.is-active {
+  text-decoration: underline;
+  text-decoration-thickness: 0.2rem;
+  text-decoration-color: var(--cs-color-accent-hover);
+}
+
+.account-link,
+.app-header__auth {
+  margin-inline-start: auto;
+}
+
+.account-link {
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 62rem) {
+  .app-header {
+    position: relative;
+    padding-block: var(--cs-space-3);
+    flex-wrap: wrap;
+  }
+
+  .app-header > nav:not(.app-header__auth) {
+    order: 3;
+    width: 100%;
+    padding-block-end: var(--cs-space-2);
+    overflow-x: auto;
+  }
+}

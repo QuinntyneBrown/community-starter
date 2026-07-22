@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Safe templates and operable channels
+
+class OperateNotificationChannelsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class OperateNotificationChannelsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class OperateNotificationChannelsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: OperateNotificationChannelsDecision): void
+}
+
+interface IOperateNotificationChannelsRepository {
+  +Load(subjectId: string): Task<OperateNotificationChannelsRecord>
+  +Commit(record: OperateNotificationChannelsRecord, expectedVersion: long): Task<bool>
+}
+
+class OperateNotificationChannelsPolicy {
+  +Evaluate(record: OperateNotificationChannelsRecord, request: OperateNotificationChannelsRequest): OperateNotificationChannelsDecision
+  +RenderSafeTemplatesAndActionLinks(record: OperateNotificationChannelsRecord, request: OperateNotificationChannelsRequest): OperateNotificationChannelsDecision
+  +ObserveAndRepairDeliveryHealth(record: OperateNotificationChannelsRecord, request: OperateNotificationChannelsRequest): OperateNotificationChannelsDecision
+  +DisableUnconfiguredChannelsCleanly(record: OperateNotificationChannelsRecord, request: OperateNotificationChannelsRequest): OperateNotificationChannelsDecision
+}
+
+class OperateNotificationChannelsHandler {
+  +Handle(request: OperateNotificationChannelsRequest): Task<OperateNotificationChannelsDecision>
+}
+
+class OperateNotificationChannelsProjector {
+  +Project(decision: OperateNotificationChannelsDecision): Task<void>
+}
+
+OperateNotificationChannelsHandler ..> OperateNotificationChannelsRequest : handles
+OperateNotificationChannelsHandler ..> OperateNotificationChannelsPolicy : evaluates with
+OperateNotificationChannelsHandler --> IOperateNotificationChannelsRepository : loads / commits
+IOperateNotificationChannelsRepository --> OperateNotificationChannelsRecord : persists
+OperateNotificationChannelsPolicy ..> OperateNotificationChannelsRecord : inspects
+OperateNotificationChannelsPolicy --> OperateNotificationChannelsDecision : produces
+OperateNotificationChannelsRecord ..> OperateNotificationChannelsDecision : applies accepted
+OperateNotificationChannelsProjector ..> OperateNotificationChannelsDecision : consumes committed
+@enduml

@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Respect Community context
+
+class RespectCommunityContextRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class RespectCommunityContextDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class RespectCommunityContextRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: RespectCommunityContextDecision): void
+}
+
+interface IRespectCommunityContextRepository {
+  +Load(subjectId: string): Task<RespectCommunityContextRecord>
+  +Commit(record: RespectCommunityContextRecord, expectedVersion: long): Task<bool>
+}
+
+class RespectCommunityContextPolicy {
+  +Evaluate(record: RespectCommunityContextRecord, request: RespectCommunityContextRequest): RespectCommunityContextDecision
+  +RenderCommunityContextSafely(record: RespectCommunityContextRecord, request: RespectCommunityContextRequest): RespectCommunityContextDecision
+  +RetireProfileDataSafely(record: RespectCommunityContextRecord, request: RespectCommunityContextRequest): RespectCommunityContextDecision
+  +ListAPrivacySafeMemberDirectory(record: RespectCommunityContextRecord, request: RespectCommunityContextRequest): RespectCommunityContextDecision
+}
+
+class RespectCommunityContextHandler {
+  +Handle(request: RespectCommunityContextRequest): Task<RespectCommunityContextDecision>
+}
+
+class RespectCommunityContextProjector {
+  +Project(decision: RespectCommunityContextDecision): Task<void>
+}
+
+RespectCommunityContextHandler ..> RespectCommunityContextRequest : handles
+RespectCommunityContextHandler ..> RespectCommunityContextPolicy : evaluates with
+RespectCommunityContextHandler --> IRespectCommunityContextRepository : loads / commits
+IRespectCommunityContextRepository --> RespectCommunityContextRecord : persists
+RespectCommunityContextPolicy ..> RespectCommunityContextRecord : inspects
+RespectCommunityContextPolicy --> RespectCommunityContextDecision : produces
+RespectCommunityContextRecord ..> RespectCommunityContextDecision : applies accepted
+RespectCommunityContextProjector ..> RespectCommunityContextDecision : consumes committed
+@enduml

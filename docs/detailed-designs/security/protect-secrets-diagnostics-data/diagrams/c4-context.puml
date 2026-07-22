@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Keep secrets, diagnostics, and personal data out of unsafe channels
+
+Person(actor, "Security Engineer", "Reviews security boundaries and production evidence")
+System(system, "Community Platform Security", "Security policy, enforcement, evidence, and readiness system")
+System_Ext(external, "Identity, Secret, and Scan Providers", "Protected identity, key, and vulnerability services")
+
+Rel(actor, system, "Uses for keep secrets, diagnostics, and personal data out of unsafe channels", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

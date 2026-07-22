@@ -1,0 +1,23 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components — Operate with explicit privacy and security readiness
+
+Container(frontend, "Security Operations Console", "Web application and review tools", "Presents state and sends typed intent")
+Container_Boundary(backend, "Security Control API") {
+  Component(endpoint, "OperateSecurityReadinessEndpoint", "security control endpoint", "Authenticates and dispatches feature requests")
+  Component(handler, "OperateSecurityReadinessHandler", "Application service", "Coordinates authorized state and one unit of work")
+  Component(policy, "OperateSecurityReadinessPolicy", "Domain policy", "Evaluates traced behavior against current state")
+  Component(repository, "IOperateSecurityReadinessRepository", "Persistence port", "Loads scoped state and commits conditionally")
+  Component(projector, "OperateSecurityReadinessProjector", "Post-commit component", "Processes committed outcomes idempotently")
+  ComponentDb(store, "Security Evidence Store", "Protected relational and object storage", "Stores state, versions, outcomes, and checkpoints")
+}
+
+Rel(frontend, endpoint, "Submits OperateSecurityReadinessRequest", "Typed contract")
+Rel(endpoint, handler, "Dispatches request")
+Rel(handler, policy, "Evaluates current state")
+Rel(handler, repository, "Loads and commits")
+Rel(repository, store, "Reads and writes", "Transactional adapter")
+Rel(handler, projector, "Publishes committed outcome", "Durable handoff")
+Rel(projector, store, "Checkpoints processing", "Idempotent adapter")
+@enduml

@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Keep discovery trustworthy
+
+class KeepDiscoveryTrustworthyRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class KeepDiscoveryTrustworthyDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class KeepDiscoveryTrustworthyRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: KeepDiscoveryTrustworthyDecision): void
+}
+
+interface IKeepDiscoveryTrustworthyRepository {
+  +Load(subjectId: string): Task<KeepDiscoveryTrustworthyRecord>
+  +Commit(record: KeepDiscoveryTrustworthyRecord, expectedVersion: long): Task<bool>
+}
+
+class KeepDiscoveryTrustworthyPolicy {
+  +Evaluate(record: KeepDiscoveryTrustworthyRecord, request: KeepDiscoveryTrustworthyRequest): KeepDiscoveryTrustworthyDecision
+  +ReconcileCommittedChanges(record: KeepDiscoveryTrustworthyRecord, request: KeepDiscoveryTrustworthyRequest): KeepDiscoveryTrustworthyDecision
+  +BoundAbuseAndDegradation(record: KeepDiscoveryTrustworthyRecord, request: KeepDiscoveryTrustworthyRequest): KeepDiscoveryTrustworthyDecision
+}
+
+class KeepDiscoveryTrustworthyHandler {
+  +Handle(request: KeepDiscoveryTrustworthyRequest): Task<KeepDiscoveryTrustworthyDecision>
+}
+
+class KeepDiscoveryTrustworthyProjector {
+  +Project(decision: KeepDiscoveryTrustworthyDecision): Task<void>
+}
+
+KeepDiscoveryTrustworthyHandler ..> KeepDiscoveryTrustworthyRequest : handles
+KeepDiscoveryTrustworthyHandler ..> KeepDiscoveryTrustworthyPolicy : evaluates with
+KeepDiscoveryTrustworthyHandler --> IKeepDiscoveryTrustworthyRepository : loads / commits
+IKeepDiscoveryTrustworthyRepository --> KeepDiscoveryTrustworthyRecord : persists
+KeepDiscoveryTrustworthyPolicy ..> KeepDiscoveryTrustworthyRecord : inspects
+KeepDiscoveryTrustworthyPolicy --> KeepDiscoveryTrustworthyDecision : produces
+KeepDiscoveryTrustworthyRecord ..> KeepDiscoveryTrustworthyDecision : applies accepted
+KeepDiscoveryTrustworthyProjector ..> KeepDiscoveryTrustworthyDecision : consumes committed
+@enduml

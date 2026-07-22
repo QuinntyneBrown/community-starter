@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Keep community behavior server-authoritative
+
+class KeepBehaviorServerAuthoritativeRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class KeepBehaviorServerAuthoritativeDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class KeepBehaviorServerAuthoritativeRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: KeepBehaviorServerAuthoritativeDecision): void
+}
+
+interface IKeepBehaviorServerAuthoritativeRepository {
+  +Load(subjectId: string): Task<KeepBehaviorServerAuthoritativeRecord>
+  +Commit(record: KeepBehaviorServerAuthoritativeRecord, expectedVersion: long): Task<bool>
+}
+
+class KeepBehaviorServerAuthoritativePolicy {
+  +Evaluate(record: KeepBehaviorServerAuthoritativeRecord, request: KeepBehaviorServerAuthoritativeRequest): KeepBehaviorServerAuthoritativeDecision
+  +ApplicationCodeIsOrganizedByCapabilityAndUseCase(record: KeepBehaviorServerAuthoritativeRecord, request: KeepBehaviorServerAuthoritativeRequest): KeepBehaviorServerAuthoritativeDecision
+  +StateChangesFollowOneAuthoritativeSequence(record: KeepBehaviorServerAuthoritativeRecord, request: KeepBehaviorServerAuthoritativeRequest): KeepBehaviorServerAuthoritativeDecision
+  +HTTPContractsAndFailuresAreStableAndExplicit(record: KeepBehaviorServerAuthoritativeRecord, request: KeepBehaviorServerAuthoritativeRequest): KeepBehaviorServerAuthoritativeDecision
+}
+
+class KeepBehaviorServerAuthoritativeHandler {
+  +Handle(request: KeepBehaviorServerAuthoritativeRequest): Task<KeepBehaviorServerAuthoritativeDecision>
+}
+
+class KeepBehaviorServerAuthoritativeProjector {
+  +Project(decision: KeepBehaviorServerAuthoritativeDecision): Task<void>
+}
+
+KeepBehaviorServerAuthoritativeHandler ..> KeepBehaviorServerAuthoritativeRequest : handles
+KeepBehaviorServerAuthoritativeHandler ..> KeepBehaviorServerAuthoritativePolicy : evaluates with
+KeepBehaviorServerAuthoritativeHandler --> IKeepBehaviorServerAuthoritativeRepository : loads / commits
+IKeepBehaviorServerAuthoritativeRepository --> KeepBehaviorServerAuthoritativeRecord : persists
+KeepBehaviorServerAuthoritativePolicy ..> KeepBehaviorServerAuthoritativeRecord : inspects
+KeepBehaviorServerAuthoritativePolicy --> KeepBehaviorServerAuthoritativeDecision : produces
+KeepBehaviorServerAuthoritativeRecord ..> KeepBehaviorServerAuthoritativeDecision : applies accepted
+KeepBehaviorServerAuthoritativeProjector ..> KeepBehaviorServerAuthoritativeDecision : consumes committed
+@enduml

@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Present a trustworthy Profile
+
+class PresentTrustworthyProfileRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class PresentTrustworthyProfileDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class PresentTrustworthyProfileRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: PresentTrustworthyProfileDecision): void
+}
+
+interface IPresentTrustworthyProfileRepository {
+  +Load(subjectId: string): Task<PresentTrustworthyProfileRecord>
+  +Commit(record: PresentTrustworthyProfileRecord, expectedVersion: long): Task<bool>
+}
+
+class PresentTrustworthyProfilePolicy {
+  +Evaluate(record: PresentTrustworthyProfileRecord, request: PresentTrustworthyProfileRequest): PresentTrustworthyProfileDecision
+  +ProvisionOneProfile(record: PresentTrustworthyProfileRecord, request: PresentTrustworthyProfileRequest): PresentTrustworthyProfileDecision
+  +UpdateOwnedProfileFields(record: PresentTrustworthyProfileRecord, request: PresentTrustworthyProfileRequest): PresentTrustworthyProfileDecision
+  +ControlProfileVisibility(record: PresentTrustworthyProfileRecord, request: PresentTrustworthyProfileRequest): PresentTrustworthyProfileDecision
+  +ManageProfileImagery(record: PresentTrustworthyProfileRecord, request: PresentTrustworthyProfileRequest): PresentTrustworthyProfileDecision
+}
+
+class PresentTrustworthyProfileHandler {
+  +Handle(request: PresentTrustworthyProfileRequest): Task<PresentTrustworthyProfileDecision>
+}
+
+class PresentTrustworthyProfileProjector {
+  +Project(decision: PresentTrustworthyProfileDecision): Task<void>
+}
+
+PresentTrustworthyProfileHandler ..> PresentTrustworthyProfileRequest : handles
+PresentTrustworthyProfileHandler ..> PresentTrustworthyProfilePolicy : evaluates with
+PresentTrustworthyProfileHandler --> IPresentTrustworthyProfileRepository : loads / commits
+IPresentTrustworthyProfileRepository --> PresentTrustworthyProfileRecord : persists
+PresentTrustworthyProfilePolicy ..> PresentTrustworthyProfileRecord : inspects
+PresentTrustworthyProfilePolicy --> PresentTrustworthyProfileDecision : produces
+PresentTrustworthyProfileRecord ..> PresentTrustworthyProfileDecision : applies accepted
+PresentTrustworthyProfileProjector ..> PresentTrustworthyProfileDecision : consumes committed
+@enduml

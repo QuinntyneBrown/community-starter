@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers — Keep community behavior server-authoritative
+
+Person(actor, "Product Engineer", "Implements and verifies full-stack feature slices")
+System_Ext(external, "Package and Deployment Providers", "Toolchain, package, artifact, and environment services")
+System_Boundary(system, "Community Starter Delivery System") {
+  Container(frontend, "Engineering Workbench", "CLI and repository tools", "Collects intent and presents current state")
+  Container(backend, "Delivery Control Plane", "CI/CD workflows", "Applies synchronous boundary and application policy")
+  Container(worker, "Verification Worker", "Pipeline jobs", "Processes idempotent post-commit work")
+  ContainerDb(store, "Evidence Registry", "Versioned artifact metadata", "Stores authoritative state and durable outcomes")
+}
+
+Rel(actor, frontend, "Uses", "HTTPS or local command")
+Rel(frontend, backend, "Submits typed intent", "Typed contract")
+Rel(backend, store, "Reads and conditionally writes", "Transactional adapter")
+Rel(backend, worker, "Publishes committed outcomes", "Durable queue")
+Rel(worker, store, "Reads outcomes and checkpoints", "Idempotent adapter")
+Rel(worker, external, "Invokes eligible external work", "Purpose-bound contract")
+@enduml

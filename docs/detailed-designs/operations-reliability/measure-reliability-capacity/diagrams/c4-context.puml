@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Reliability and capacity are measurable
+
+Person(actor, "Platform Operator", "Observes, restores, and changes the production service")
+System(system, "Community Platform Operations", "Telemetry, incident, recovery, and production-change control system")
+System_Ext(external, "Telemetry and Paging Providers", "Metrics, traces, logs, alerts, and responder routing")
+
+Rel(actor, system, "Uses for reliability and capacity are measurable", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

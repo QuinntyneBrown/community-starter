@@ -1,0 +1,59 @@
+@startuml
+title UML sequence behaviour — Specialize the shared visual language
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Starter Adopter" as actor
+box "Frontend — Developer Workspace" #E0F2FE
+  participant "SpecializeStarterSafelySurface" as surface
+  participant "SpecializeStarterSafelyClient" as client
+end box
+box "Backend — Starter Tooling Runtime" #D1FADF
+  participant "SpecializeStarterSafelyEndpoint" as endpoint
+end box
+box "Backend — Starter Configuration and Policy" #ECFDF3
+  participant "SpecializeStarterSafelyHandler" as handler
+  participant "SpecializeStarterSafelyPolicy" as policy
+end box
+box "Backend — Local and Package Infrastructure" #FFF4E5
+  database "Starter Metadata Store" as store
+  participant "SpecializeStarterSafelyProjector" as projector
+end box
+
+actor -> surface : Start specialize the shared visual language
+surface -> client : Build typed request
+client -> endpoint : Submit request
+endpoint -> endpoint : Authenticate and apply boundary policy
+endpoint -> handler : Send SpecializeStarterSafelyRequest
+handler -> store : Load current scoped state
+store --> handler : Current state and version
+handler -> policy : Enforce L2-STRT-009 — specialize the shared visual language
+policy --> handler : Typed decision
+alt Decision is accepted
+  opt Requirement changes authoritative state
+    handler -> store : Commit state and outcome conditionally
+    store --> handler : Commit result
+  end
+  opt Committed outcome has derived effects
+    handler -> projector : Publish committed outcome
+    projector --> handler : Accepted for idempotent processing
+  end
+  handler --> endpoint : Accepted feature result
+else Decision is rejected or stale
+  handler --> endpoint : Safe validation, denial, or conflict result
+end
+endpoint --> client : Typed response
+client --> surface : Reconciled feature result
+surface --> actor : Present current outcome
+@enduml

@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+title Containers — Development data is useful and cannot leak into production
+
+Person(actor, "Starter Adopter", "Configures and specializes a clean repository checkout")
+System_Ext(external, "Package Registries and Local Providers", "Toolchain, package, and development dependency services")
+System_Boundary(system, "Community Starter") {
+  Container(frontend, "Developer Workspace", "CLI and editor tasks", "Collects intent and presents current state")
+  Container(backend, "Starter Tooling Runtime", ".NET and Node.js tools", "Applies synchronous boundary and application policy")
+  Container(worker, "Validation and Setup Worker", "Local automation", "Processes idempotent post-commit work")
+  ContainerDb(store, "Starter Metadata Store", "Versioned files", "Stores authoritative state and durable outcomes")
+}
+
+Rel(actor, frontend, "Uses", "HTTPS or local command")
+Rel(frontend, backend, "Submits typed intent", "Typed contract")
+Rel(backend, store, "Reads and conditionally writes", "Transactional adapter")
+Rel(backend, worker, "Publishes committed outcomes", "Durable queue")
+Rel(worker, store, "Reads outcomes and checkpoints", "Idempotent adapter")
+Rel(worker, external, "Invokes eligible external work", "Purpose-bound contract")
+@enduml

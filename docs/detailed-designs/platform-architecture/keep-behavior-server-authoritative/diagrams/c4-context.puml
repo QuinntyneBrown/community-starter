@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Keep community behavior server-authoritative
+
+Person(actor, "Product Engineer", "Implements and verifies full-stack feature slices")
+System(system, "Community Starter Delivery System", "Build, verification, promotion, and engineering evidence system")
+System_Ext(external, "Package and Deployment Providers", "Toolchain, package, artifact, and environment services")
+
+Rel(actor, system, "Uses for keep community behavior server-authoritative", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

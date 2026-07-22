@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Govern Community identity
+
+class GovernCommunityIdentityRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class GovernCommunityIdentityDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class GovernCommunityIdentityRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: GovernCommunityIdentityDecision): void
+}
+
+interface IGovernCommunityIdentityRepository {
+  +Load(subjectId: string): Task<GovernCommunityIdentityRecord>
+  +Commit(record: GovernCommunityIdentityRecord, expectedVersion: long): Task<bool>
+}
+
+class GovernCommunityIdentityPolicy {
+  +Evaluate(record: GovernCommunityIdentityRecord, request: GovernCommunityIdentityRequest): GovernCommunityIdentityDecision
+  +CreateACommunity(record: GovernCommunityIdentityRecord, request: GovernCommunityIdentityRequest): GovernCommunityIdentityDecision
+  +ConfigureCommunityIdentity(record: GovernCommunityIdentityRecord, request: GovernCommunityIdentityRequest): GovernCommunityIdentityDecision
+}
+
+class GovernCommunityIdentityHandler {
+  +Handle(request: GovernCommunityIdentityRequest): Task<GovernCommunityIdentityDecision>
+}
+
+class GovernCommunityIdentityProjector {
+  +Project(decision: GovernCommunityIdentityDecision): Task<void>
+}
+
+GovernCommunityIdentityHandler ..> GovernCommunityIdentityRequest : handles
+GovernCommunityIdentityHandler ..> GovernCommunityIdentityPolicy : evaluates with
+GovernCommunityIdentityHandler --> IGovernCommunityIdentityRepository : loads / commits
+IGovernCommunityIdentityRepository --> GovernCommunityIdentityRecord : persists
+GovernCommunityIdentityPolicy ..> GovernCommunityIdentityRecord : inspects
+GovernCommunityIdentityPolicy --> GovernCommunityIdentityDecision : produces
+GovernCommunityIdentityRecord ..> GovernCommunityIdentityDecision : applies accepted
+GovernCommunityIdentityProjector ..> GovernCommunityIdentityDecision : consumes committed
+@enduml

@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Data and service can be recovered
+
+class RecoverDataServicesRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class RecoverDataServicesDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class RecoverDataServicesRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: RecoverDataServicesDecision): void
+}
+
+interface IRecoverDataServicesRepository {
+  +Load(subjectId: string): Task<RecoverDataServicesRecord>
+  +Commit(record: RecoverDataServicesRecord, expectedVersion: long): Task<bool>
+}
+
+class RecoverDataServicesPolicy {
+  +Evaluate(record: RecoverDataServicesRecord, request: RecoverDataServicesRequest): RecoverDataServicesDecision
+  +CreateAndVerifyProtectedBackups(record: RecoverDataServicesRecord, request: RecoverDataServicesRequest): RecoverDataServicesDecision
+  +ProveRecoveryObjectivesThroughRestoreDrills(record: RecoverDataServicesRecord, request: RecoverDataServicesRequest): RecoverDataServicesDecision
+  +ReconcileDerivedStateAfterRecovery(record: RecoverDataServicesRecord, request: RecoverDataServicesRequest): RecoverDataServicesDecision
+}
+
+class RecoverDataServicesHandler {
+  +Handle(request: RecoverDataServicesRequest): Task<RecoverDataServicesDecision>
+}
+
+class RecoverDataServicesProjector {
+  +Project(decision: RecoverDataServicesDecision): Task<void>
+}
+
+RecoverDataServicesHandler ..> RecoverDataServicesRequest : handles
+RecoverDataServicesHandler ..> RecoverDataServicesPolicy : evaluates with
+RecoverDataServicesHandler --> IRecoverDataServicesRepository : loads / commits
+IRecoverDataServicesRepository --> RecoverDataServicesRecord : persists
+RecoverDataServicesPolicy ..> RecoverDataServicesRecord : inspects
+RecoverDataServicesPolicy --> RecoverDataServicesDecision : produces
+RecoverDataServicesRecord ..> RecoverDataServicesDecision : applies accepted
+RecoverDataServicesProjector ..> RecoverDataServicesDecision : consumes committed
+@enduml

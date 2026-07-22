@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Establish one canonical cross-surface visual language
+
+class EstablishVisualLanguageRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class EstablishVisualLanguageDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class EstablishVisualLanguageRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: EstablishVisualLanguageDecision): void
+}
+
+interface IEstablishVisualLanguageRepository {
+  +Load(subjectId: string): Task<EstablishVisualLanguageRecord>
+  +Commit(record: EstablishVisualLanguageRecord, expectedVersion: long): Task<bool>
+}
+
+class EstablishVisualLanguagePolicy {
+  +Evaluate(record: EstablishVisualLanguageRecord, request: EstablishVisualLanguageRequest): EstablishVisualLanguageDecision
+  +CanonicalFoundationsAndAssetsHaveOneSource(record: EstablishVisualLanguageRecord, request: EstablishVisualLanguageRequest): EstablishVisualLanguageDecision
+  +SemanticTokensCoverAllProductRolesAndStates(record: EstablishVisualLanguageRecord, request: EstablishVisualLanguageRequest): EstablishVisualLanguageDecision
+  +ComponentsProgressFromFoundationsToProductSignatures(record: EstablishVisualLanguageRecord, request: EstablishVisualLanguageRequest): EstablishVisualLanguageDecision
+}
+
+class EstablishVisualLanguageHandler {
+  +Handle(request: EstablishVisualLanguageRequest): Task<EstablishVisualLanguageDecision>
+}
+
+class EstablishVisualLanguageProjector {
+  +Project(decision: EstablishVisualLanguageDecision): Task<void>
+}
+
+EstablishVisualLanguageHandler ..> EstablishVisualLanguageRequest : handles
+EstablishVisualLanguageHandler ..> EstablishVisualLanguagePolicy : evaluates with
+EstablishVisualLanguageHandler --> IEstablishVisualLanguageRepository : loads / commits
+IEstablishVisualLanguageRepository --> EstablishVisualLanguageRecord : persists
+EstablishVisualLanguagePolicy ..> EstablishVisualLanguageRecord : inspects
+EstablishVisualLanguagePolicy --> EstablishVisualLanguageDecision : produces
+EstablishVisualLanguageRecord ..> EstablishVisualLanguageDecision : applies accepted
+EstablishVisualLanguageProjector ..> EstablishVisualLanguageDecision : consumes committed
+@enduml

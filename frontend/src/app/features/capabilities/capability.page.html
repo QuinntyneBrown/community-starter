@@ -1,0 +1,31 @@
+<section class="cs-page">
+  <header class="cs-page__header">
+    <p class="cs-eyebrow">Governed product area</p>
+    <h1>{{ title }}</h1>
+    <p>
+      {{ features().length }} documented capabilities cover {{ operationCount() }} versioned
+      operations. The contracts are available now; interactive journeys are enabled incrementally as
+      their providers and operational controls are configured.
+    </p>
+    <a routerLink="/capabilities">Explore the complete capability map</a>
+  </header>
+
+  <div class="capability-grid">
+    @for (feature of features(); track feature.slug) {
+      <article class="cs-card capability-card">
+        <p class="cs-eyebrow">{{ feature.slug }}</p>
+        <h2>{{ feature.title }}</h2>
+        <ul>
+          @for (operation of feature.operations; track operation.requirementId) {
+            <li>
+              <span>{{ operation.method }}</span>
+              <code>{{ operation.requirementId }}</code>
+            </li>
+          }
+        </ul>
+      </article>
+    } @empty {
+      <p class="cs-card">No capabilities are registered for this product area.</p>
+    }
+  </div>
+</section>

@@ -1,0 +1,23 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components — Preserve explicit full-stack boundaries
+
+Container(frontend, "Engineering Workbench", "CLI and repository tools", "Presents state and sends typed intent")
+Container_Boundary(backend, "Delivery Control Plane") {
+  Component(endpoint, "PreserveFullStackBoundariesEndpoint", "pipeline entry point", "Authenticates and dispatches feature requests")
+  Component(handler, "PreserveFullStackBoundariesHandler", "Application service", "Coordinates authorized state and one unit of work")
+  Component(policy, "PreserveFullStackBoundariesPolicy", "Domain policy", "Evaluates traced behavior against current state")
+  Component(repository, "IPreserveFullStackBoundariesRepository", "Persistence port", "Loads scoped state and commits conditionally")
+  Component(projector, "PreserveFullStackBoundariesProjector", "Post-commit component", "Processes committed outcomes idempotently")
+  ComponentDb(store, "Evidence Registry", "Versioned artifact metadata", "Stores state, versions, outcomes, and checkpoints")
+}
+
+Rel(frontend, endpoint, "Submits PreserveFullStackBoundariesRequest", "Typed contract")
+Rel(endpoint, handler, "Dispatches request")
+Rel(handler, policy, "Evaluates current state")
+Rel(handler, repository, "Loads and commits")
+Rel(repository, store, "Reads and writes", "Transactional adapter")
+Rel(handler, projector, "Publishes committed outcome", "Durable handoff")
+Rel(projector, store, "Checkpoints processing", "Idempotent adapter")
+@enduml

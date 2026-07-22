@@ -1,0 +1,66 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Enforce one secure build-and-promotion pipeline
+
+class EnforceSecureArtifactPromotionRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class EnforceSecureArtifactPromotionDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class EnforceSecureArtifactPromotionRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: EnforceSecureArtifactPromotionDecision): void
+}
+
+interface IEnforceSecureArtifactPromotionRepository {
+  +Load(subjectId: string): Task<EnforceSecureArtifactPromotionRecord>
+  +Commit(record: EnforceSecureArtifactPromotionRecord, expectedVersion: long): Task<bool>
+}
+
+class EnforceSecureArtifactPromotionPolicy {
+  +Evaluate(record: EnforceSecureArtifactPromotionRecord, request: EnforceSecureArtifactPromotionRequest): EnforceSecureArtifactPromotionDecision
+  +CIRestoresFormatsAnalyzesAndBuildsEveryStack(record: EnforceSecureArtifactPromotionRecord, request: EnforceSecureArtifactPromotionRequest): EnforceSecureArtifactPromotionDecision
+  +CIRunsLayeredTestsAndValidatesSourceArtifacts(record: EnforceSecureArtifactPromotionRecord, request: EnforceSecureArtifactPromotionRequest): EnforceSecureArtifactPromotionDecision
+  +OneVerifiedArtifactIsPromotedWithProtectedCredentials(record: EnforceSecureArtifactPromotionRecord, request: EnforceSecureArtifactPromotionRequest): EnforceSecureArtifactPromotionDecision
+  +DeploymentSmokeChecksReleaseCriticalBehavior(record: EnforceSecureArtifactPromotionRecord, request: EnforceSecureArtifactPromotionRequest): EnforceSecureArtifactPromotionDecision
+  +ProvisionEnvironmentsThroughReviewedInfrastructureCode(record: EnforceSecureArtifactPromotionRecord, request: EnforceSecureArtifactPromotionRequest): EnforceSecureArtifactPromotionDecision
+  +IsolatePreviewAndNonProductionEnvironments(record: EnforceSecureArtifactPromotionRecord, request: EnforceSecureArtifactPromotionRequest): EnforceSecureArtifactPromotionDecision
+}
+
+class EnforceSecureArtifactPromotionHandler {
+  +Handle(request: EnforceSecureArtifactPromotionRequest): Task<EnforceSecureArtifactPromotionDecision>
+}
+
+class EnforceSecureArtifactPromotionProjector {
+  +Project(decision: EnforceSecureArtifactPromotionDecision): Task<void>
+}
+
+EnforceSecureArtifactPromotionHandler ..> EnforceSecureArtifactPromotionRequest : handles
+EnforceSecureArtifactPromotionHandler ..> EnforceSecureArtifactPromotionPolicy : evaluates with
+EnforceSecureArtifactPromotionHandler --> IEnforceSecureArtifactPromotionRepository : loads / commits
+IEnforceSecureArtifactPromotionRepository --> EnforceSecureArtifactPromotionRecord : persists
+EnforceSecureArtifactPromotionPolicy ..> EnforceSecureArtifactPromotionRecord : inspects
+EnforceSecureArtifactPromotionPolicy --> EnforceSecureArtifactPromotionDecision : produces
+EnforceSecureArtifactPromotionRecord ..> EnforceSecureArtifactPromotionDecision : applies accepted
+EnforceSecureArtifactPromotionProjector ..> EnforceSecureArtifactPromotionDecision : consumes committed
+@enduml

@@ -1,0 +1,23 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components — Evolve and verify public deployment safely
+
+Container(frontend, "Public Website", "HTML, CSS, and TypeScript", "Presents state and sends typed intent")
+Container_Boundary(backend, "Public Web Publishing Pipeline") {
+  Component(endpoint, "VerifyPublicDeploymentEndpoint", "publishing entry point", "Authenticates and dispatches feature requests")
+  Component(handler, "VerifyPublicDeploymentHandler", "Application service", "Coordinates authorized state and one unit of work")
+  Component(policy, "VerifyPublicDeploymentPolicy", "Domain policy", "Evaluates traced behavior against current state")
+  Component(repository, "IVerifyPublicDeploymentRepository", "Persistence port", "Loads scoped state and commits conditionally")
+  Component(projector, "VerifyPublicDeploymentProjector", "Post-commit component", "Processes committed outcomes idempotently")
+  ComponentDb(store, "Public Artifact Manifest", "Versioned files", "Stores state, versions, outcomes, and checkpoints")
+}
+
+Rel(frontend, endpoint, "Submits VerifyPublicDeploymentRequest", "Typed contract")
+Rel(endpoint, handler, "Dispatches request")
+Rel(handler, policy, "Evaluates current state")
+Rel(handler, repository, "Loads and commits")
+Rel(repository, store, "Reads and writes", "Transactional adapter")
+Rel(handler, projector, "Publishes committed outcome", "Durable handoff")
+Rel(projector, store, "Checkpoints processing", "Idempotent adapter")
+@enduml

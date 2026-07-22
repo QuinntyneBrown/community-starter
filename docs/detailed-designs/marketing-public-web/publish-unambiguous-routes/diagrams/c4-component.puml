@@ -1,0 +1,23 @@
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+title Components — Publish marketing and application routes without ambiguity
+
+Container(frontend, "Public Website", "HTML, CSS, and TypeScript", "Presents state and sends typed intent")
+Container_Boundary(backend, "Public Web Publishing Pipeline") {
+  Component(endpoint, "PublishUnambiguousRoutesEndpoint", "publishing entry point", "Authenticates and dispatches feature requests")
+  Component(handler, "PublishUnambiguousRoutesHandler", "Application service", "Coordinates authorized state and one unit of work")
+  Component(policy, "PublishUnambiguousRoutesPolicy", "Domain policy", "Evaluates traced behavior against current state")
+  Component(repository, "IPublishUnambiguousRoutesRepository", "Persistence port", "Loads scoped state and commits conditionally")
+  Component(projector, "PublishUnambiguousRoutesProjector", "Post-commit component", "Processes committed outcomes idempotently")
+  ComponentDb(store, "Public Artifact Manifest", "Versioned files", "Stores state, versions, outcomes, and checkpoints")
+}
+
+Rel(frontend, endpoint, "Submits PublishUnambiguousRoutesRequest", "Typed contract")
+Rel(endpoint, handler, "Dispatches request")
+Rel(handler, policy, "Evaluates current state")
+Rel(handler, repository, "Loads and commits")
+Rel(repository, store, "Reads and writes", "Transactional adapter")
+Rel(handler, projector, "Publishes committed outcome", "Durable handoff")
+Rel(projector, store, "Checkpoints processing", "Idempotent adapter")
+@enduml

@@ -1,0 +1,59 @@
+@startuml
+title UML sequence behaviour — Track dependency and asset provenance
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Starter Adopter" as actor
+box "Frontend — Developer Workspace" #E0F2FE
+  participant "MaintainRepositoryKnowledgeSurface" as surface
+  participant "MaintainRepositoryKnowledgeClient" as client
+end box
+box "Backend — Starter Tooling Runtime" #D1FADF
+  participant "MaintainRepositoryKnowledgeEndpoint" as endpoint
+end box
+box "Backend — Starter Configuration and Policy" #ECFDF3
+  participant "MaintainRepositoryKnowledgeHandler" as handler
+  participant "MaintainRepositoryKnowledgePolicy" as policy
+end box
+box "Backend — Local and Package Infrastructure" #FFF4E5
+  database "Starter Metadata Store" as store
+  participant "MaintainRepositoryKnowledgeProjector" as projector
+end box
+
+actor -> surface : Start track dependency and asset provenance
+surface -> client : Build typed request
+client -> endpoint : Submit request
+endpoint -> endpoint : Authenticate and apply boundary policy
+endpoint -> handler : Send MaintainRepositoryKnowledgeRequest
+handler -> store : Load current scoped state
+store --> handler : Current state and version
+handler -> policy : Enforce L2-STRT-015 — track dependency and asset provenance
+policy --> handler : Typed decision
+alt Decision is accepted
+  opt Requirement changes authoritative state
+    handler -> store : Commit state and outcome conditionally
+    store --> handler : Commit result
+  end
+  opt Committed outcome has derived effects
+    handler -> projector : Publish committed outcome
+    projector --> handler : Accepted for idempotent processing
+  end
+  handler --> endpoint : Accepted feature result
+else Decision is rejected or stale
+  handler --> endpoint : Safe validation, denial, or conflict result
+end
+endpoint --> client : Typed response
+client --> surface : Reconciled feature result
+surface --> actor : Present current outcome
+@enduml

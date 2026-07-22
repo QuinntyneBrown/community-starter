@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Durable Moderation Cases
+
+class ManageModerationCasesRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ManageModerationCasesDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ManageModerationCasesRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ManageModerationCasesDecision): void
+}
+
+interface IManageModerationCasesRepository {
+  +Load(subjectId: string): Task<ManageModerationCasesRecord>
+  +Commit(record: ManageModerationCasesRecord, expectedVersion: long): Task<bool>
+}
+
+class ManageModerationCasesPolicy {
+  +Evaluate(record: ManageModerationCasesRecord, request: ManageModerationCasesRequest): ManageModerationCasesDecision
+  +CreateACaseWithDurableEvidence(record: ManageModerationCasesRecord, request: ManageModerationCasesRequest): ManageModerationCasesDecision
+  +TriageAssignAndEscalateCases(record: ManageModerationCasesRecord, request: ManageModerationCasesRequest): ManageModerationCasesDecision
+  +RestrictAndRetainSensitiveEvidence(record: ManageModerationCasesRecord, request: ManageModerationCasesRequest): ManageModerationCasesDecision
+}
+
+class ManageModerationCasesHandler {
+  +Handle(request: ManageModerationCasesRequest): Task<ManageModerationCasesDecision>
+}
+
+class ManageModerationCasesProjector {
+  +Project(decision: ManageModerationCasesDecision): Task<void>
+}
+
+ManageModerationCasesHandler ..> ManageModerationCasesRequest : handles
+ManageModerationCasesHandler ..> ManageModerationCasesPolicy : evaluates with
+ManageModerationCasesHandler --> IManageModerationCasesRepository : loads / commits
+IManageModerationCasesRepository --> ManageModerationCasesRecord : persists
+ManageModerationCasesPolicy ..> ManageModerationCasesRecord : inspects
+ManageModerationCasesPolicy --> ManageModerationCasesDecision : produces
+ManageModerationCasesRecord ..> ManageModerationCasesDecision : applies accepted
+ManageModerationCasesProjector ..> ManageModerationCasesDecision : consumes committed
+@enduml

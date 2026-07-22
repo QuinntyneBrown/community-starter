@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Consistent attendance management
+
+class ManageAttendanceRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ManageAttendanceDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ManageAttendanceRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ManageAttendanceDecision): void
+}
+
+interface IManageAttendanceRepository {
+  +Load(subjectId: string): Task<ManageAttendanceRecord>
+  +Commit(record: ManageAttendanceRecord, expectedVersion: long): Task<bool>
+}
+
+class ManageAttendancePolicy {
+  +Evaluate(record: ManageAttendanceRecord, request: ManageAttendanceRequest): ManageAttendanceDecision
+  +TransitionOneCurrentRSVP(record: ManageAttendanceRecord, request: ManageAttendanceRequest): ManageAttendanceDecision
+  +AllocateCapacityAndWaitlistFairly(record: ManageAttendanceRecord, request: ManageAttendanceRequest): ManageAttendanceDecision
+  +ReconcileAttendanceAfterAccessLoss(record: ManageAttendanceRecord, request: ManageAttendanceRequest): ManageAttendanceDecision
+}
+
+class ManageAttendanceHandler {
+  +Handle(request: ManageAttendanceRequest): Task<ManageAttendanceDecision>
+}
+
+class ManageAttendanceProjector {
+  +Project(decision: ManageAttendanceDecision): Task<void>
+}
+
+ManageAttendanceHandler ..> ManageAttendanceRequest : handles
+ManageAttendanceHandler ..> ManageAttendancePolicy : evaluates with
+ManageAttendanceHandler --> IManageAttendanceRepository : loads / commits
+IManageAttendanceRepository --> ManageAttendanceRecord : persists
+ManageAttendancePolicy ..> ManageAttendanceRecord : inspects
+ManageAttendancePolicy --> ManageAttendanceDecision : produces
+ManageAttendanceRecord ..> ManageAttendanceDecision : applies accepted
+ManageAttendanceProjector ..> ManageAttendanceDecision : consumes committed
+@enduml

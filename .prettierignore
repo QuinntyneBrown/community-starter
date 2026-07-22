@@ -1,0 +1,3 @@
+frontend/src/app/core/feature-catalog.generated.ts
+**/dist/
+**/node_modules/

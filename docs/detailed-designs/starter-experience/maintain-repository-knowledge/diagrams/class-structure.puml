@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Repository knowledge stays current and actionable
+
+class MaintainRepositoryKnowledgeRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class MaintainRepositoryKnowledgeDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class MaintainRepositoryKnowledgeRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: MaintainRepositoryKnowledgeDecision): void
+}
+
+interface IMaintainRepositoryKnowledgeRepository {
+  +Load(subjectId: string): Task<MaintainRepositoryKnowledgeRecord>
+  +Commit(record: MaintainRepositoryKnowledgeRecord, expectedVersion: long): Task<bool>
+}
+
+class MaintainRepositoryKnowledgePolicy {
+  +Evaluate(record: MaintainRepositoryKnowledgeRecord, request: MaintainRepositoryKnowledgeRequest): MaintainRepositoryKnowledgeDecision
+  +MaintainAnOutcomeOrientedDocumentationMap(record: MaintainRepositoryKnowledgeRecord, request: MaintainRepositoryKnowledgeRequest): MaintainRepositoryKnowledgeDecision
+  +DocumentContributionOwnershipSupportAndDisclosure(record: MaintainRepositoryKnowledgeRecord, request: MaintainRepositoryKnowledgeRequest): MaintainRepositoryKnowledgeDecision
+  +TrackDependencyAndAssetProvenance(record: MaintainRepositoryKnowledgeRecord, request: MaintainRepositoryKnowledgeRequest): MaintainRepositoryKnowledgeDecision
+}
+
+class MaintainRepositoryKnowledgeHandler {
+  +Handle(request: MaintainRepositoryKnowledgeRequest): Task<MaintainRepositoryKnowledgeDecision>
+}
+
+class MaintainRepositoryKnowledgeProjector {
+  +Project(decision: MaintainRepositoryKnowledgeDecision): Task<void>
+}
+
+MaintainRepositoryKnowledgeHandler ..> MaintainRepositoryKnowledgeRequest : handles
+MaintainRepositoryKnowledgeHandler ..> MaintainRepositoryKnowledgePolicy : evaluates with
+MaintainRepositoryKnowledgeHandler --> IMaintainRepositoryKnowledgeRepository : loads / commits
+IMaintainRepositoryKnowledgeRepository --> MaintainRepositoryKnowledgeRecord : persists
+MaintainRepositoryKnowledgePolicy ..> MaintainRepositoryKnowledgeRecord : inspects
+MaintainRepositoryKnowledgePolicy --> MaintainRepositoryKnowledgeDecision : produces
+MaintainRepositoryKnowledgeRecord ..> MaintainRepositoryKnowledgeDecision : applies accepted
+MaintainRepositoryKnowledgeProjector ..> MaintainRepositoryKnowledgeDecision : consumes committed
+@enduml

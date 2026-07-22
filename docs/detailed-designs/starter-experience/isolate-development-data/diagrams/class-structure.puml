@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Development data is useful and cannot leak into production
+
+class IsolateDevelopmentDataRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class IsolateDevelopmentDataDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class IsolateDevelopmentDataRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: IsolateDevelopmentDataDecision): void
+}
+
+interface IIsolateDevelopmentDataRepository {
+  +Load(subjectId: string): Task<IsolateDevelopmentDataRecord>
+  +Commit(record: IsolateDevelopmentDataRecord, expectedVersion: long): Task<bool>
+}
+
+class IsolateDevelopmentDataPolicy {
+  +Evaluate(record: IsolateDevelopmentDataRecord, request: IsolateDevelopmentDataRequest): IsolateDevelopmentDataDecision
+  +SeedDeterministicFictionalScenarios(record: IsolateDevelopmentDataRecord, request: IsolateDevelopmentDataRequest): IsolateDevelopmentDataDecision
+  +IsolateDevelopmentOnlyIdentityAndProviders(record: IsolateDevelopmentDataRecord, request: IsolateDevelopmentDataRequest): IsolateDevelopmentDataDecision
+}
+
+class IsolateDevelopmentDataHandler {
+  +Handle(request: IsolateDevelopmentDataRequest): Task<IsolateDevelopmentDataDecision>
+}
+
+class IsolateDevelopmentDataProjector {
+  +Project(decision: IsolateDevelopmentDataDecision): Task<void>
+}
+
+IsolateDevelopmentDataHandler ..> IsolateDevelopmentDataRequest : handles
+IsolateDevelopmentDataHandler ..> IsolateDevelopmentDataPolicy : evaluates with
+IsolateDevelopmentDataHandler --> IIsolateDevelopmentDataRepository : loads / commits
+IIsolateDevelopmentDataRepository --> IsolateDevelopmentDataRecord : persists
+IsolateDevelopmentDataPolicy ..> IsolateDevelopmentDataRecord : inspects
+IsolateDevelopmentDataPolicy --> IsolateDevelopmentDataDecision : produces
+IsolateDevelopmentDataRecord ..> IsolateDevelopmentDataDecision : applies accepted
+IsolateDevelopmentDataProjector ..> IsolateDevelopmentDataDecision : consumes committed
+@enduml

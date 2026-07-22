@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Support Comment conversations
+
+class SupportCommentConversationsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class SupportCommentConversationsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class SupportCommentConversationsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: SupportCommentConversationsDecision): void
+}
+
+interface ISupportCommentConversationsRepository {
+  +Load(subjectId: string): Task<SupportCommentConversationsRecord>
+  +Commit(record: SupportCommentConversationsRecord, expectedVersion: long): Task<bool>
+}
+
+class SupportCommentConversationsPolicy {
+  +Evaluate(record: SupportCommentConversationsRecord, request: SupportCommentConversationsRequest): SupportCommentConversationsDecision
+  +AddAComment(record: SupportCommentConversationsRecord, request: SupportCommentConversationsRequest): SupportCommentConversationsDecision
+  +EditAndRemoveAComment(record: SupportCommentConversationsRecord, request: SupportCommentConversationsRequest): SupportCommentConversationsDecision
+  +ControlCommentConversations(record: SupportCommentConversationsRecord, request: SupportCommentConversationsRequest): SupportCommentConversationsDecision
+}
+
+class SupportCommentConversationsHandler {
+  +Handle(request: SupportCommentConversationsRequest): Task<SupportCommentConversationsDecision>
+}
+
+class SupportCommentConversationsProjector {
+  +Project(decision: SupportCommentConversationsDecision): Task<void>
+}
+
+SupportCommentConversationsHandler ..> SupportCommentConversationsRequest : handles
+SupportCommentConversationsHandler ..> SupportCommentConversationsPolicy : evaluates with
+SupportCommentConversationsHandler --> ISupportCommentConversationsRepository : loads / commits
+ISupportCommentConversationsRepository --> SupportCommentConversationsRecord : persists
+SupportCommentConversationsPolicy ..> SupportCommentConversationsRecord : inspects
+SupportCommentConversationsPolicy --> SupportCommentConversationsDecision : produces
+SupportCommentConversationsRecord ..> SupportCommentConversationsDecision : applies accepted
+SupportCommentConversationsProjector ..> SupportCommentConversationsDecision : consumes committed
+@enduml

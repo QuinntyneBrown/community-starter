@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — Keep delivery claims and documentation honest
+
+Person(actor, "Delivery Engineer", "Builds, verifies, and promotes release artifacts")
+System(system, "Community Starter Delivery System", "Build, verification, promotion, and engineering evidence system")
+System_Ext(external, "Package and Deployment Providers", "Toolchain, package, artifact, and environment services")
+
+Rel(actor, system, "Uses for keep delivery claims and documentation honest", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml

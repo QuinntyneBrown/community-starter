@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Trustworthy Event lifecycle
+
+class ManageEventLifecycleRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ManageEventLifecycleDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ManageEventLifecycleRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ManageEventLifecycleDecision): void
+}
+
+interface IManageEventLifecycleRepository {
+  +Load(subjectId: string): Task<ManageEventLifecycleRecord>
+  +Commit(record: ManageEventLifecycleRecord, expectedVersion: long): Task<bool>
+}
+
+class ManageEventLifecyclePolicy {
+  +Evaluate(record: ManageEventLifecycleRecord, request: ManageEventLifecycleRequest): ManageEventLifecycleDecision
+  +CreateAValidEvent(record: ManageEventLifecycleRecord, request: ManageEventLifecycleRequest): ManageEventLifecycleDecision
+  +PublishReviseAndCancelAtomically(record: ManageEventLifecycleRecord, request: ManageEventLifecycleRequest): ManageEventLifecycleDecision
+}
+
+class ManageEventLifecycleHandler {
+  +Handle(request: ManageEventLifecycleRequest): Task<ManageEventLifecycleDecision>
+}
+
+class ManageEventLifecycleProjector {
+  +Project(decision: ManageEventLifecycleDecision): Task<void>
+}
+
+ManageEventLifecycleHandler ..> ManageEventLifecycleRequest : handles
+ManageEventLifecycleHandler ..> ManageEventLifecyclePolicy : evaluates with
+ManageEventLifecycleHandler --> IManageEventLifecycleRepository : loads / commits
+IManageEventLifecycleRepository --> ManageEventLifecycleRecord : persists
+ManageEventLifecyclePolicy ..> ManageEventLifecycleRecord : inspects
+ManageEventLifecyclePolicy --> ManageEventLifecycleDecision : produces
+ManageEventLifecycleRecord ..> ManageEventLifecycleDecision : applies accepted
+ManageEventLifecycleProjector ..> ManageEventLifecycleDecision : consumes committed
+@enduml

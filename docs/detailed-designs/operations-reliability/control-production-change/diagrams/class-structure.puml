@@ -1,0 +1,62 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Production change remains controlled and supportable
+
+class ControlProductionChangeRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ControlProductionChangeDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ControlProductionChangeRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ControlProductionChangeDecision): void
+}
+
+interface IControlProductionChangeRepository {
+  +Load(subjectId: string): Task<ControlProductionChangeRecord>
+  +Commit(record: ControlProductionChangeRecord, expectedVersion: long): Task<bool>
+}
+
+class ControlProductionChangePolicy {
+  +Evaluate(record: ControlProductionChangeRecord, request: ControlProductionChangeRequest): ControlProductionChangeDecision
+  +OperateMigrationsAndBackfillsSafely(record: ControlProductionChangeRecord, request: ControlProductionChangeRequest): ControlProductionChangeDecision
+  +OperateDurableJobQueues(record: ControlProductionChangeRecord, request: ControlProductionChangeRequest): ControlProductionChangeDecision
+}
+
+class ControlProductionChangeHandler {
+  +Handle(request: ControlProductionChangeRequest): Task<ControlProductionChangeDecision>
+}
+
+class ControlProductionChangeProjector {
+  +Project(decision: ControlProductionChangeDecision): Task<void>
+}
+
+ControlProductionChangeHandler ..> ControlProductionChangeRequest : handles
+ControlProductionChangeHandler ..> ControlProductionChangePolicy : evaluates with
+ControlProductionChangeHandler --> IControlProductionChangeRepository : loads / commits
+IControlProductionChangeRepository --> ControlProductionChangeRecord : persists
+ControlProductionChangePolicy ..> ControlProductionChangeRecord : inspects
+ControlProductionChangePolicy --> ControlProductionChangeDecision : produces
+ControlProductionChangeRecord ..> ControlProductionChangeDecision : applies accepted
+ControlProductionChangeProjector ..> ControlProductionChangeDecision : consumes committed
+@enduml

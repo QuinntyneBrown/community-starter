@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Keep secrets, diagnostics, and personal data out of unsafe channels
+
+class ProtectSecretsDiagnosticsDataRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class ProtectSecretsDiagnosticsDataDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class ProtectSecretsDiagnosticsDataRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: ProtectSecretsDiagnosticsDataDecision): void
+}
+
+interface IProtectSecretsDiagnosticsDataRepository {
+  +Load(subjectId: string): Task<ProtectSecretsDiagnosticsDataRecord>
+  +Commit(record: ProtectSecretsDiagnosticsDataRecord, expectedVersion: long): Task<bool>
+}
+
+class ProtectSecretsDiagnosticsDataPolicy {
+  +Evaluate(record: ProtectSecretsDiagnosticsDataRecord, request: ProtectSecretsDiagnosticsDataRequest): ProtectSecretsDiagnosticsDataDecision
+  +SecretsStayOutsideSourceAndPlaceholdersFailSafely(record: ProtectSecretsDiagnosticsDataRecord, request: ProtectSecretsDiagnosticsDataRequest): ProtectSecretsDiagnosticsDataDecision
+  +PublicFailuresAreSanitizedAndPrivateDiagnosticsAreRedacted(record: ProtectSecretsDiagnosticsDataRecord, request: ProtectSecretsDiagnosticsDataRequest): ProtectSecretsDiagnosticsDataDecision
+  +SourceFixturesAndDemosContainNoRealPersonalData(record: ProtectSecretsDiagnosticsDataRecord, request: ProtectSecretsDiagnosticsDataRequest): ProtectSecretsDiagnosticsDataDecision
+  +EncryptProtectedDataAndGovernKeys(record: ProtectSecretsDiagnosticsDataRecord, request: ProtectSecretsDiagnosticsDataRequest): ProtectSecretsDiagnosticsDataDecision
+}
+
+class ProtectSecretsDiagnosticsDataHandler {
+  +Handle(request: ProtectSecretsDiagnosticsDataRequest): Task<ProtectSecretsDiagnosticsDataDecision>
+}
+
+class ProtectSecretsDiagnosticsDataProjector {
+  +Project(decision: ProtectSecretsDiagnosticsDataDecision): Task<void>
+}
+
+ProtectSecretsDiagnosticsDataHandler ..> ProtectSecretsDiagnosticsDataRequest : handles
+ProtectSecretsDiagnosticsDataHandler ..> ProtectSecretsDiagnosticsDataPolicy : evaluates with
+ProtectSecretsDiagnosticsDataHandler --> IProtectSecretsDiagnosticsDataRepository : loads / commits
+IProtectSecretsDiagnosticsDataRepository --> ProtectSecretsDiagnosticsDataRecord : persists
+ProtectSecretsDiagnosticsDataPolicy ..> ProtectSecretsDiagnosticsDataRecord : inspects
+ProtectSecretsDiagnosticsDataPolicy --> ProtectSecretsDiagnosticsDataDecision : produces
+ProtectSecretsDiagnosticsDataRecord ..> ProtectSecretsDiagnosticsDataDecision : applies accepted
+ProtectSecretsDiagnosticsDataProjector ..> ProtectSecretsDiagnosticsDataDecision : consumes committed
+@enduml

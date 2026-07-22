@@ -1,0 +1,66 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam class {
+  BorderColor #344054
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+title Class structure — Proportionate server-owned enforcement
+
+class EnforceProportionateActionsRequest {
+  +string SubjectId
+  +string Action
+  +long ExpectedVersion
+  +Map<string, string> Input
+}
+
+class EnforceProportionateActionsDecision {
+  +bool IsAccepted
+  +string Code
+  +Map<string, string> SafeDetails
+}
+
+class EnforceProportionateActionsRecord {
+  +string Id
+  +string ScopeId
+  +string State
+  +long Version
+  +Apply(decision: EnforceProportionateActionsDecision): void
+}
+
+interface IEnforceProportionateActionsRepository {
+  +Load(subjectId: string): Task<EnforceProportionateActionsRecord>
+  +Commit(record: EnforceProportionateActionsRecord, expectedVersion: long): Task<bool>
+}
+
+class EnforceProportionateActionsPolicy {
+  +Evaluate(record: EnforceProportionateActionsRecord, request: EnforceProportionateActionsRequest): EnforceProportionateActionsDecision
+  +BoundModeratorAuthorityAndConflicts(record: EnforceProportionateActionsRecord, request: EnforceProportionateActionsRequest): EnforceProportionateActionsDecision
+  +ApplyOneAuditableModerationAction(record: EnforceProportionateActionsRecord, request: EnforceProportionateActionsRequest): EnforceProportionateActionsDecision
+  +NotifyExpireAndReverseActionsSafely(record: EnforceProportionateActionsRecord, request: EnforceProportionateActionsRequest): EnforceProportionateActionsDecision
+  +EnforceTheModerationActionEffectMatrix(record: EnforceProportionateActionsRecord, request: EnforceProportionateActionsRequest): EnforceProportionateActionsDecision
+  +RoutePunitiveChangesThroughModerationActions(record: EnforceProportionateActionsRecord, request: EnforceProportionateActionsRequest): EnforceProportionateActionsDecision
+  +ResolveEnforcementAndOwnershipContinuityAtomically(record: EnforceProportionateActionsRecord, request: EnforceProportionateActionsRequest): EnforceProportionateActionsDecision
+}
+
+class EnforceProportionateActionsHandler {
+  +Handle(request: EnforceProportionateActionsRequest): Task<EnforceProportionateActionsDecision>
+}
+
+class EnforceProportionateActionsProjector {
+  +Project(decision: EnforceProportionateActionsDecision): Task<void>
+}
+
+EnforceProportionateActionsHandler ..> EnforceProportionateActionsRequest : handles
+EnforceProportionateActionsHandler ..> EnforceProportionateActionsPolicy : evaluates with
+EnforceProportionateActionsHandler --> IEnforceProportionateActionsRepository : loads / commits
+IEnforceProportionateActionsRepository --> EnforceProportionateActionsRecord : persists
+EnforceProportionateActionsPolicy ..> EnforceProportionateActionsRecord : inspects
+EnforceProportionateActionsPolicy --> EnforceProportionateActionsDecision : produces
+EnforceProportionateActionsRecord ..> EnforceProportionateActionsDecision : applies accepted
+EnforceProportionateActionsProjector ..> EnforceProportionateActionsDecision : consumes committed
+@enduml

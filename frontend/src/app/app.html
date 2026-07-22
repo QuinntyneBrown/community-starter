@@ -1,0 +1,28 @@
+<a class="cs-skip-link" href="#main">Skip to content</a>
+<header class="app-header">
+  <a class="brand" routerLink="/home" aria-label="Community Starter home">
+    <span class="brand__mark" aria-hidden="true">CS</span>
+    <span>Community Starter</span>
+  </a>
+  @if (auth.account()) {
+    <nav aria-label="Member navigation">
+      <a routerLink="/home" routerLinkActive="is-active">Home</a>
+      <a routerLink="/messages" routerLinkActive="is-active">Messages</a>
+      <a routerLink="/events" routerLinkActive="is-active">Events</a>
+      <a routerLink="/notifications" routerLinkActive="is-active">Notifications</a>
+      <a routerLink="/profile" routerLinkActive="is-active">Profile</a>
+      <a routerLink="/capabilities" routerLinkActive="is-active">Capabilities</a>
+    </nav>
+    <a class="account-link" routerLink="/settings" aria-label="Account settings">
+      {{ auth.account()?.email }}
+    </a>
+  } @else {
+    <nav class="app-header__auth" aria-label="Account navigation">
+      <a routerLink="/sign-in">Sign in</a>
+      <a class="cs-button" routerLink="/register">Create account</a>
+    </nav>
+  }
+</header>
+<main id="main">
+  <router-outlet />
+</main>

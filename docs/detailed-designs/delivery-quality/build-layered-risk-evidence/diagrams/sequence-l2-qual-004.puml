@@ -1,0 +1,59 @@
+@startuml
+title UML sequence behaviour — Contracts, journeys, and deployments receive cross-stack evidence
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam ArrowColor #344054
+skinparam rectangle {
+  BorderColor #344054
+  FontColor #101828
+}
+skinparam package {
+  BorderColor #667085
+  FontColor #101828
+  BackgroundColor #F9FAFB
+}
+actor "Delivery Engineer" as actor
+box "Frontend — Engineering Workbench" #E0F2FE
+  participant "BuildLayeredRiskEvidenceSurface" as surface
+  participant "BuildLayeredRiskEvidenceClient" as client
+end box
+box "Backend — Delivery Control Plane" #D1FADF
+  participant "BuildLayeredRiskEvidenceEndpoint" as endpoint
+end box
+box "Backend — Delivery Policy and Evidence" #ECFDF3
+  participant "BuildLayeredRiskEvidenceHandler" as handler
+  participant "BuildLayeredRiskEvidencePolicy" as policy
+end box
+box "Backend — Build and Artifact Infrastructure" #FFF4E5
+  database "Evidence Registry" as store
+  participant "BuildLayeredRiskEvidenceProjector" as projector
+end box
+
+actor -> surface : Start contracts, journeys, and deployments receive cross-stack evidence
+surface -> client : Build typed request
+client -> endpoint : Submit request
+endpoint -> endpoint : Authenticate and apply boundary policy
+endpoint -> handler : Send BuildLayeredRiskEvidenceRequest
+handler -> store : Load current scoped state
+store --> handler : Current state and version
+handler -> policy : Enforce L2-QUAL-004 — contracts, journeys, and deployments receive cross-stack evidence
+policy --> handler : Typed decision
+alt Decision is accepted
+  opt Requirement changes authoritative state
+    handler -> store : Commit state and outcome conditionally
+    store --> handler : Commit result
+  end
+  opt Committed outcome has derived effects
+    handler -> projector : Publish committed outcome
+    projector --> handler : Accepted for idempotent processing
+  end
+  handler --> endpoint : Accepted feature result
+else Decision is rejected or stale
+  handler --> endpoint : Safe validation, denial, or conflict result
+end
+endpoint --> client : Typed response
+client --> surface : Reconciled feature result
+surface --> actor : Present current outcome
+@enduml

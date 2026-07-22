@@ -1,0 +1,12 @@
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+title System Context — People can access and control their data
+
+Person(actor, "Account Holder", "Controls personal data and Account lifecycle choices")
+System(system, "Community Platform", "Community participation, administration, and safety system")
+System_Ext(external, "Data Processors", "Process purpose-bound data under lifecycle controls")
+
+Rel(actor, system, "Uses for people can access and control their data", "HTTPS or local command")
+Rel(system, external, "Invokes for eligible external work", "Purpose-bound contract")
+@enduml
